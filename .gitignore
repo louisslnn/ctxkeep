@@ -2,3 +2,6 @@ node_modules/
 
 # ctxkeep artifact cache, session state and metrics ledger (see src/config.js)
 .ctxkeep/
+
+# VS Code extension packages do not belong in this repo (see TASKS.md 0.3)
+*.vsix
