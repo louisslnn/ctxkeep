@@ -20,7 +20,7 @@ import { copyFileSync, existsSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { readInput, emit, guard } from "../src/io.js";
 import { loadConfig } from "../src/config.js";
-import { readState, writeState, recordMetric } from "../src/store.js";
+import { readState, appendState, recordMetric } from "../src/store.js";
 import { memoryPath } from "../src/memory.js";
 
 guard(async () => {
@@ -61,8 +61,7 @@ guard(async () => {
   const touchedThisSession = existsSync(path) && statSync(path).mtimeMs > sessionStarted;
   if (touchedThisSession) return;
 
-  state.compactGateUsed = true;
-  writeState(config, input.session_id, state);
+  appendState(config, input.session_id, { compactGateUsed: true });
 
   emit({
     decision: "block",

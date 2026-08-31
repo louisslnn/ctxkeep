@@ -14,7 +14,7 @@
 import { readInput, emit, guard, extractText, replaceText } from "../src/io.js";
 import { loadConfig } from "../src/config.js";
 import { pruneToolOutput } from "../src/prune/index.js";
-import { recordMetric, readState, writeState } from "../src/store.js";
+import { recordMetric, appendState } from "../src/store.js";
 
 guard(async () => {
   const input = await readInput();
@@ -35,14 +35,16 @@ guard(async () => {
   });
 
   // Record the read so PreToolUse can dedupe a repeat of the same file.
+  // Appended as its own log line so parallel PostToolUse hooks don't clobber.
   if (config.dedupe?.enabled && filePath) {
-    const state = readState(config, input.session_id);
-    state.reads[filePath] = {
-      at: Date.now(),
-      tokens: result.originalTokens,
-      cachedAt: result.cachedAt ?? null,
-    };
-    writeState(config, input.session_id, state);
+    appendState(config, input.session_id, {
+      read: {
+        path: filePath,
+        at: Date.now(),
+        tokens: result.originalTokens,
+        cachedAt: result.cachedAt ?? null,
+      },
+    });
   }
 
   if (!result.pruned) return;
