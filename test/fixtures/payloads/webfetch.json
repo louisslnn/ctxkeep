@@ -1,0 +1,25 @@
+{
+  "session_id": "659aabb8-5c28-4ead-bf60-bd35584d7af6",
+  "transcript_path": "/Users/louissalanon/.claude/projects/-Users-louissalanon-Desktop-HyperCompressor/659aabb8-5c28-4ead-bf60-bd35584d7af6.jsonl",
+  "cwd": "/Users/louissalanon/Desktop/HyperCompressor",
+  "permission_mode": "auto",
+  "effort": {
+    "level": "high"
+  },
+  "hook_event_name": "PostToolUse",
+  "tool_name": "WebFetch",
+  "tool_input": {
+    "url": "https://example.com",
+    "prompt": "What is the main heading of this page?"
+  },
+  "tool_response": {
+    "bytes": 559,
+    "code": 200,
+    "codeText": "OK",
+    "result": "The main heading of this page is \"Example Domain.\"\n\nThe page explains that \"This domain is for use in documentation examples without needing permission,\" making it a resource intended for instructional purposes.",
+    "durationMs": 1292,
+    "url": "https://example.com"
+  },
+  "tool_use_id": "toolu_01CnUQcNg6Yfr6ajSJasaT2h",
+  "duration_ms": 1294
+}

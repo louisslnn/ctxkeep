@@ -1,5 +1,47 @@
 # BLOCKED — decisions that need Louis
 
+## 1.4 — Grep/Glob payloads not capturable in this environment  *(needs a session where those tools exist)*
+
+Real `PostToolUse` payloads were captured from a live session for **Read, Bash,
+WebFetch and one MCP tool** (`mcp__ide__getDiagnostics`) and committed under
+`test/fixtures/payloads/`. `extractText` was narrowed to the confirmed shapes and
+is tested against each in `test/payloads.test.js`.
+
+**Not captured: `Grep` and `Glob`.** The agent session that did this work does not
+expose the `Grep`/`Glob` tools at all (they are neither built-in nor in the
+deferred-tool list here — only `Bash`, `Read`, etc. are available), so there was
+no way to make Claude Code emit those two `tool_response` shapes. Per the task's
+own instruction, they are **skipped rather than invented**.
+
+**Exact procedure to finish, in a normal Claude Code session that has Grep/Glob:**
+
+The plugin's `PostToolUse` hook is already registered for `Read|Bash|Grep|Glob|WebFetch`
+and is spawned fresh (`node hooks/post-tool-use.js`) on every matching call, so a
+capture line takes effect immediately — no restart needed:
+
+1. Temporarily add, right after `const input = await readInput();` in
+   `hooks/post-tool-use.js`:
+   ```js
+   try { (await import("node:fs")).appendFileSync("/tmp/ctxkeep-shapes.jsonl", JSON.stringify(input) + "\n"); } catch {}
+   ```
+   (Or use the README's throwaway `settings.local.json` logging hook and restart.)
+2. Run one `Grep` (e.g. search a pattern across `src/`) and one `Glob`
+   (e.g. `**/*.js`).
+3. Read `/tmp/ctxkeep-shapes.jsonl`, pull the entries whose `tool_name` is
+   `Grep` and `Glob`, and save them as `test/fixtures/payloads/grep.json` and
+   `glob.json` (whole hook stdin payload, faithful shape).
+4. **Revert the capture line.** Add the observed shapes to the confirmed list in
+   `src/io.js` `extractText` if they differ, and add assertions to
+   `test/payloads.test.js` (the "every committed payload fixture" test already
+   generalises to any new fixture).
+
+Until then the fallback probe in `extractText` covers `Grep`/`Glob` — both return
+string content that the fallback keys (`content`/`output`/`text`) or a bare
+string will pick up — so nothing is broken; the shapes are just unconfirmed.
+
+---
+
+
 These Phase 0 tasks require a human decision or an action the working agreement
 says an agent must not take autonomously. Each entry states the research done, a
 recommendation, and exactly what remains for you to decide or run.

@@ -1,0 +1,23 @@
+{
+  "session_id": "659aabb8-5c28-4ead-bf60-bd35584d7af6",
+  "transcript_path": "/Users/louissalanon/.claude/projects/-Users-louissalanon-Desktop-HyperCompressor/659aabb8-5c28-4ead-bf60-bd35584d7af6.jsonl",
+  "cwd": "/Users/louissalanon/Desktop/HyperCompressor",
+  "permission_mode": "auto",
+  "effort": {
+    "level": "high"
+  },
+  "hook_event_name": "PostToolUse",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "python3 - <<'PY'\nimport json\nseen={}\nwith open('/tmp/ctxkeep-shapes.jsonl') as f:\n    for line in f:\n        line=line.strip()\n        if not line: continue\n        o=json.loads(line); seen[o.get('tool_name')]=o\nr=seen['Read']['tool_response']\nprint(\"Read.file keys:\", list(r['file'].keys()))\nprint(\"Read.file (content elided):\", {k:(v if k!='content' else f'<{len(v)} chars>') for k,v in r['file'].items()})\nm=seen['mcp__ide__getDiagnostics']['tool_response']\nprint(\"MCP elem:\", m[0])\nPY"
+  },
+  "tool_response": {
+    "stdout": "Read.file keys: ['filePath', 'content', 'numLines', 'startLine', 'totalLines']\nRead.file (content elided): {'filePath': '/Users/louissalanon/Desktop/HyperCompressor/LICENSE', 'content': '<1066 chars>', 'numLines': 22, 'startLine': 1, 'totalLines': 22}\nMCP elem: {'type': 'text', 'text': '[\\n  {\\n    \"uri\": \"file:///Users/louissalanon/Desktop/HyperCompressor/LAUNCH.md\",\\n    \"linesInFile\": 140,\\n    \"diagnostics\": []\\n  },\\n  {\\n    \"uri\": \"file:///Users/louissalanon/Desktop/HyperCompressor/TESTING.md\",\\n    \"diagnostics\": []\\n  },\\n  {\\n    \"uri\": \"file:///Users/louissalanon/Desktop/HyperCompressor/TASKS.md\",\\n    \"diagnostics\": []\\n  },\\n  {\\n    \"uri\": \"file:///Users/louissalanon/Desktop/HyperCompressor/CLAUDE.md\",\\n    \"diagnostics\": []\\n  }\\n]'}",
+    "stderr": "",
+    "interrupted": false,
+    "isImage": false,
+    "noOutputExpected": false
+  },
+  "tool_use_id": "toolu_017SqLwNiVNn6Ni9ZA3JosLj",
+  "duration_ms": 78
+}

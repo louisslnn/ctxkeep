@@ -30,15 +30,24 @@ export function passthrough() {
 /**
  * Extract text from a tool result.
  *
- * The exact shape of `tool_response` varies by tool and has changed across
- * Claude Code versions, so this probes the plausible shapes rather than
- * assuming one. Run `ctxkeep doctor` against a live session to confirm the
- * shape your version emits before tuning anything.
+ * The confirmed shapes below were captured from a live Claude Code session and
+ * committed under test/fixtures/payloads/ (task 1.4):
+ *
+ *   Read:     { type: "text", file: { content, filePath, numLines, ... } }
+ *   Bash:     { stdout, stderr, interrupted, isImage, noOutputExpected }
+ *   WebFetch: { result, code, codeText, bytes, durationMs, url }
+ *   MCP:      [ { type: "text", text }, ... ]
+ *   (string)  some tools/versions hand back a bare string
+ *
+ * These are checked first. A generic fallback follows, because the shape has
+ * changed across Claude Code versions and an unrecognised result should degrade
+ * to "extract what looks like text" rather than to nothing.
  */
 export function extractText(toolResponse) {
   if (toolResponse == null) return null;
   if (typeof toolResponse === "string") return toolResponse;
 
+  // MCP tools and any block-shaped result: an array of { type, text } blocks.
   if (Array.isArray(toolResponse)) {
     const parts = toolResponse
       .map((b) => (typeof b === "string" ? b : b?.text))
@@ -46,7 +55,15 @@ export function extractText(toolResponse) {
     return parts.length ? parts.join("\n") : null;
   }
 
-  for (const key of ["content", "output", "stdout", "text", "result", "file"]) {
+  // Confirmed object shapes, in the order above.
+  if (toolResponse.file && typeof toolResponse.file.content === "string") {
+    return toolResponse.file.content;
+  }
+  if (typeof toolResponse.stdout === "string") return toolResponse.stdout;
+  if (typeof toolResponse.result === "string") return toolResponse.result;
+
+  // Fallback: probe the remaining plausible keys for unobserved/future shapes.
+  for (const key of ["content", "output", "text"]) {
     const value = toolResponse[key];
     if (typeof value === "string") return value;
     if (value && typeof value === "object") {
