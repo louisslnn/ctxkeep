@@ -73,7 +73,22 @@ export function initMemory(config) {
  *     commands. Text that looks like injected instructions can trip prompt
  *     injection defenses and get surfaced to the user instead of used.
  */
-export function buildDigest(config) {
+const PREFIX = "Accumulated context for this project, recorded in previous sessions:\n\n";
+
+/**
+ * Pack the memory file into an injectable digest and report what happened.
+ *
+ * Returns null when there is nothing to inject, otherwise:
+ *   { digest, injectedChars, cap, keptSections, droppedSections }
+ *
+ * Truncation is SECTION-AWARE. Past the cap the old digest sliced at a raw
+ * character offset, so a later section could be injected with its header but
+ * only half its body — and the model can't tell a truncated fact from a
+ * complete one. Instead we keep whole `## ` sections in order and drop the ones
+ * that don't fit, whole. `doctor` uses the counts to warn before knowledge is
+ * silently left out.
+ */
+export function packDigest(config) {
   const raw = readMemory(config);
   if (!raw) return null;
 
@@ -95,23 +110,54 @@ export function buildDigest(config) {
     });
 
   if (!sections.length) return null;
-  const body = sections.join("\n\n");
 
+  // Budget the section body against the cap, leaving headroom for the framing
+  // prefix and tail so the whole digest stays under the hook-output cap.
   const cap = Math.min(config.memory.maxInjectedChars, 9000);
-  let content = body;
-  let truncated = false;
+  const budget = Math.max(0, cap - PREFIX.length - 240);
 
-  if (content.length > cap) {
-    content = content.slice(0, cap);
-    const lastBreak = content.lastIndexOf("\n");
-    if (lastBreak > cap * 0.6) content = content.slice(0, lastBreak);
-    truncated = true;
+  const kept = [];
+  let used = 0;
+  for (const section of sections) {
+    const join = kept.length ? 2 : 0; // "\n\n"
+    if (used + join + section.length <= budget) {
+      kept.push(section);
+      used += join + section.length;
+    }
+    // A section that doesn't fit is dropped whole; smaller later sections may
+    // still fit, so keep scanning rather than stopping at the first miss.
   }
 
-  const tail = truncated
-    ? `\n\n(This is the first ${content.length} characters of ${config.memory.file}. ` +
-      `The complete file is at ${config.memory.file}.)`
-    : `\n\nThe source of this section is ${config.memory.file} in the project root.`;
+  // Degenerate case: not even one section fits the soft budget. Keeping the
+  // section WHOLE matters more than the soft cap, so emit the first one intact —
+  // only trimming (at a line boundary) if it would breach Claude Code's hard
+  // 10,000-char hook-output cap.
+  if (kept.length === 0) {
+    const HARD = 9500;
+    let one = sections[0];
+    if (one.length > HARD) {
+      one = one.slice(0, HARD);
+      const lastBreak = one.lastIndexOf("\n");
+      if (lastBreak > HARD * 0.5) one = one.slice(0, lastBreak);
+    }
+    kept.push(one);
+  }
 
-  return `Accumulated context for this project, recorded in previous sessions:\n\n${content}${tail}`;
+  const dropped = sections.length - kept.length;
+  const body = kept.join("\n\n");
+
+  const tail =
+    dropped > 0
+      ? `\n\n(${dropped} further section${dropped === 1 ? "" : "s"} of ${config.memory.file} ` +
+        `${dropped === 1 ? "is" : "are"} not shown here, to stay within the injection budget. ` +
+        `The complete file is at ${config.memory.file}.)`
+      : `\n\nThe source of this section is ${config.memory.file} in the project root.`;
+
+  const digest = `${PREFIX}${body}${tail}`;
+  return { digest, injectedChars: digest.length, cap, keptSections: kept.length, droppedSections: dropped };
+}
+
+/** The injectable text, or null when there is nothing to inject. */
+export function buildDigest(config) {
+  return packDigest(config)?.digest ?? null;
 }

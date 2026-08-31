@@ -4,7 +4,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadConfig } from "../src/config.js";
 import { readMetrics } from "../src/store.js";
-import { initMemory, memoryPath, buildDigest } from "../src/memory.js";
+import { initMemory, memoryPath, packDigest } from "../src/memory.js";
 import { formatTokens } from "../src/tokenize.js";
 
 const PKG_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -117,14 +117,29 @@ function doctor() {
   check(wired, "hooks registered", "run `ctxkeep init`, or enable the plugin");
   check(existsSync(memoryPath(config)), `${config.memory.file} exists`, "run `ctxkeep init`");
 
-  const digest = buildDigest(config);
+  const pack = packDigest(config);
   check(
-    digest !== null,
+    pack !== null,
     `${config.memory.file} has content to inject`,
     "it is still the empty template — nothing will be injected until you add entries",
   );
-  if (digest) {
-    console.log(`    injecting ${digest.length} chars (cap 10,000)`);
+  if (pack) {
+    console.log(
+      `    injecting ${pack.injectedChars} chars across ${pack.keptSections} section(s) (hard cap 10,000)`,
+    );
+    if (pack.droppedSections > 0) {
+      check(
+        false,
+        `${config.memory.file} fits within the injection budget`,
+        `${pack.droppedSections} whole section(s) are over the ${pack.cap}-char budget and are not ` +
+          `being injected — trim ${config.memory.file} or raise memory.maxInjectedChars`,
+      );
+    } else if (pack.injectedChars >= pack.cap * 0.8) {
+      console.log(
+        `    ⚠ approaching the injection budget (${pack.injectedChars}/${pack.cap} chars); ` +
+          `consider trimming ${config.memory.file} before sections start dropping`,
+      );
+    }
   }
 
   const gitignore = join(config.projectRoot, ".gitignore");
