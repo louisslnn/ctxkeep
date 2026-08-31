@@ -100,6 +100,11 @@ Savings alone are a meaningless metric; you can hit any compression number by
 deleting more. Each fixture declares `critical` patterns that must survive, and
 the harness reports them alongside the savings:
 
+The percentages below are the output of `npm run eval` over three synthetic
+fixtures in `eval/fixtures/`. They measure the pruner against fixed inputs, not
+real Claude Code sessions, and are **not** a real-world savings claim — your
+mileage depends entirely on what your tools actually emit.
+
 ```
 fixture                     before   after   saved   inline  lost
 bash-short-passthrough          76      76      0%      2/2     0
