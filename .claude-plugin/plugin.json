@@ -2,8 +2,8 @@
   "name": "ctxkeep",
   "version": "0.1.0",
   "description": "Prunes bulky tool output before it enters context, dedupes repeat file reads, and persists durable project memory across compactions.",
-  "author": { "name": "YOUR NAME" },
-  "homepage": "https://github.com/YOUR-USER/ctxkeep",
+  "author": { "name": "Louis Salanon", "email": "louis.salanon7@gmail.com" },
+  "homepage": "https://github.com/louisslnn/ctxkeep",
   "license": "MIT",
   "keywords": ["context", "tokens", "memory", "hooks"]
 }
