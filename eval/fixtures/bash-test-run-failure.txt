@@ -1,0 +1,180 @@
+$ npm test
+
+> api@1.4.0 test
+> vitest run
+
+RUN  v1.6.0  /srv/api
+
+ ✓ src/routes/users.test.js  (6 tests) 3ms
+ ✓ src/routes/users.test.js  (7 tests) 4ms
+ ✓ src/routes/users.test.js  (8 tests) 5ms
+ ✓ src/routes/users.test.js  (9 tests) 6ms
+ ✓ src/routes/users.test.js  (6 tests) 7ms
+ ✓ src/routes/users.test.js  (7 tests) 8ms
+ ✓ src/routes/users.test.js  (8 tests) 9ms
+ ✓ src/routes/users.test.js  (9 tests) 10ms
+ ✓ src/routes/users.test.js  (6 tests) 11ms
+ ✓ src/routes/users.test.js  (7 tests) 3ms
+ ✓ src/routes/users.test.js  (8 tests) 4ms
+ ✓ src/routes/users.test.js  (9 tests) 5ms
+ ✓ src/routes/users.test.js  (6 tests) 6ms
+ ✓ src/routes/users.test.js  (7 tests) 7ms
+ ✓ src/routes/users.test.js  (8 tests) 8ms
+ ✓ src/routes/users.test.js  (9 tests) 9ms
+ ✓ src/routes/users.test.js  (6 tests) 10ms
+ ✓ src/routes/users.test.js  (7 tests) 11ms
+ ✓ src/routes/users.test.js  (8 tests) 3ms
+ ✓ src/routes/users.test.js  (9 tests) 4ms
+ ✓ src/routes/users.test.js  (6 tests) 5ms
+ ✓ src/routes/users.test.js  (7 tests) 6ms
+ ✓ src/routes/users.test.js  (8 tests) 7ms
+ ✓ src/routes/users.test.js  (9 tests) 8ms
+ ✓ src/routes/users.test.js  (6 tests) 9ms
+ ✓ src/routes/users.test.js  (7 tests) 10ms
+ ✓ src/routes/users.test.js  (8 tests) 11ms
+ ✓ src/routes/users.test.js  (9 tests) 3ms
+ ✓ src/routes/users.test.js  (6 tests) 4ms
+ ✓ src/routes/users.test.js  (7 tests) 5ms
+ ✓ src/routes/users.test.js  (8 tests) 6ms
+ ✓ src/routes/users.test.js  (9 tests) 7ms
+ ✓ src/routes/users.test.js  (6 tests) 8ms
+ ✓ src/routes/users.test.js  (7 tests) 9ms
+ ✓ src/routes/users.test.js  (8 tests) 10ms
+ ✓ src/routes/users.test.js  (9 tests) 11ms
+ ✓ src/routes/users.test.js  (6 tests) 3ms
+ ✓ src/routes/users.test.js  (7 tests) 4ms
+ ✓ src/routes/users.test.js  (8 tests) 5ms
+ ✓ src/routes/users.test.js  (9 tests) 6ms
+ FAIL  src/auth.test.js > POST /login > rejects a bad password
+AssertionError [ERR_ASSERTION]: expected 200 to deeply equal 401
+  - Expected
+  + Received
+    - 401
+    + 200
+      at src/auth.test.js:57:24
+      at processTicksAndRejections (node:internal/process/task_queues:95:5)
+ ✓ src/routes/orders.test.js  (4 tests) 2ms
+ ✓ src/routes/orders.test.js  (5 tests) 3ms
+ ✓ src/routes/orders.test.js  (6 tests) 4ms
+ ✓ src/routes/orders.test.js  (7 tests) 5ms
+ ✓ src/routes/orders.test.js  (8 tests) 6ms
+ ✓ src/routes/orders.test.js  (4 tests) 7ms
+ ✓ src/routes/orders.test.js  (5 tests) 8ms
+ ✓ src/routes/orders.test.js  (6 tests) 2ms
+ ✓ src/routes/orders.test.js  (7 tests) 3ms
+ ✓ src/routes/orders.test.js  (8 tests) 4ms
+ ✓ src/routes/orders.test.js  (4 tests) 5ms
+ ✓ src/routes/orders.test.js  (5 tests) 6ms
+ ✓ src/routes/orders.test.js  (6 tests) 7ms
+ ✓ src/routes/orders.test.js  (7 tests) 8ms
+ ✓ src/routes/orders.test.js  (8 tests) 2ms
+ ✓ src/routes/orders.test.js  (4 tests) 3ms
+ ✓ src/routes/orders.test.js  (5 tests) 4ms
+ ✓ src/routes/orders.test.js  (6 tests) 5ms
+ ✓ src/routes/orders.test.js  (7 tests) 6ms
+ ✓ src/routes/orders.test.js  (8 tests) 7ms
+ ✓ src/routes/orders.test.js  (4 tests) 8ms
+ ✓ src/routes/orders.test.js  (5 tests) 2ms
+ ✓ src/routes/orders.test.js  (6 tests) 3ms
+ ✓ src/routes/orders.test.js  (7 tests) 4ms
+ ✓ src/routes/orders.test.js  (8 tests) 5ms
+ ✓ src/routes/orders.test.js  (4 tests) 6ms
+ ✓ src/routes/orders.test.js  (5 tests) 7ms
+ ✓ src/routes/orders.test.js  (6 tests) 8ms
+ ✓ src/routes/orders.test.js  (7 tests) 2ms
+ ✓ src/routes/orders.test.js  (8 tests) 3ms
+ ✓ src/routes/orders.test.js  (4 tests) 4ms
+ ✓ src/routes/orders.test.js  (5 tests) 5ms
+ ✓ src/routes/orders.test.js  (6 tests) 6ms
+ ✓ src/routes/orders.test.js  (7 tests) 7ms
+ ✓ src/routes/orders.test.js  (8 tests) 8ms
+ ✓ src/routes/orders.test.js  (4 tests) 2ms
+ ✓ src/routes/orders.test.js  (5 tests) 3ms
+ ✓ src/routes/orders.test.js  (6 tests) 4ms
+ ✓ src/routes/orders.test.js  (7 tests) 5ms
+ ✓ src/routes/orders.test.js  (8 tests) 6ms
+ ✓ src/routes/orders.test.js  (4 tests) 7ms
+ ✓ src/routes/orders.test.js  (5 tests) 8ms
+ ✓ src/routes/orders.test.js  (6 tests) 2ms
+ ✓ src/routes/orders.test.js  (7 tests) 3ms
+ ✓ src/routes/orders.test.js  (8 tests) 4ms
+ ✓ src/routes/orders.test.js  (4 tests) 5ms
+ ✓ src/routes/orders.test.js  (5 tests) 6ms
+ ✓ src/routes/orders.test.js  (6 tests) 7ms
+ ✓ src/routes/orders.test.js  (7 tests) 8ms
+ ✓ src/routes/orders.test.js  (8 tests) 2ms
+ ✓ src/routes/orders.test.js  (4 tests) 3ms
+ ✓ src/routes/orders.test.js  (5 tests) 4ms
+ ✓ src/routes/orders.test.js  (6 tests) 5ms
+ ✓ src/routes/orders.test.js  (7 tests) 6ms
+ ✓ src/routes/orders.test.js  (8 tests) 7ms
+ ✓ src/routes/orders.test.js  (4 tests) 8ms
+ ✓ src/routes/orders.test.js  (5 tests) 2ms
+ ✓ src/routes/orders.test.js  (6 tests) 3ms
+ ✓ src/routes/orders.test.js  (7 tests) 4ms
+ ✓ src/routes/orders.test.js  (8 tests) 5ms
+ ✓ src/routes/orders.test.js  (4 tests) 6ms
+ ✓ src/routes/orders.test.js  (5 tests) 7ms
+ ✓ src/routes/orders.test.js  (6 tests) 8ms
+ ✓ src/routes/orders.test.js  (7 tests) 2ms
+ ✓ src/routes/orders.test.js  (8 tests) 3ms
+ ✓ src/routes/orders.test.js  (4 tests) 4ms
+ ✓ src/routes/orders.test.js  (5 tests) 5ms
+ ✓ src/routes/orders.test.js  (6 tests) 6ms
+ ✓ src/routes/orders.test.js  (7 tests) 7ms
+ ✓ src/routes/orders.test.js  (8 tests) 8ms
+ ✓ src/routes/orders.test.js  (4 tests) 2ms
+ ✓ src/routes/orders.test.js  (5 tests) 3ms
+ ✓ src/routes/orders.test.js  (6 tests) 4ms
+ ✓ src/routes/orders.test.js  (7 tests) 5ms
+ ✓ src/routes/orders.test.js  (8 tests) 6ms
+ ✓ src/routes/orders.test.js  (4 tests) 7ms
+ ✓ src/routes/orders.test.js  (5 tests) 8ms
+ ✓ src/routes/orders.test.js  (6 tests) 2ms
+ ✓ src/routes/orders.test.js  (7 tests) 3ms
+ ✓ src/routes/orders.test.js  (8 tests) 4ms
+ ✓ src/routes/orders.test.js  (4 tests) 5ms
+ ✓ src/routes/orders.test.js  (5 tests) 6ms
+ ✓ src/routes/orders.test.js  (6 tests) 7ms
+ ✓ src/routes/orders.test.js  (7 tests) 8ms
+ ✓ src/routes/orders.test.js  (8 tests) 2ms
+ ✓ src/routes/orders.test.js  (4 tests) 3ms
+ ✓ src/routes/orders.test.js  (5 tests) 4ms
+ ✓ src/routes/orders.test.js  (6 tests) 5ms
+ ✓ src/routes/orders.test.js  (7 tests) 6ms
+ ✓ src/routes/orders.test.js  (8 tests) 7ms
+ ✓ src/routes/orders.test.js  (4 tests) 8ms
+ ✓ src/routes/orders.test.js  (5 tests) 2ms
+ ✓ src/routes/orders.test.js  (6 tests) 3ms
+ ✓ src/routes/orders.test.js  (7 tests) 4ms
+ ✓ src/routes/orders.test.js  (8 tests) 5ms
+ ✓ src/routes/orders.test.js  (4 tests) 6ms
+ ✓ src/routes/orders.test.js  (5 tests) 7ms
+ ✓ src/routes/orders.test.js  (6 tests) 8ms
+ ✓ src/routes/orders.test.js  (7 tests) 2ms
+ ✓ src/routes/orders.test.js  (8 tests) 3ms
+ ✓ src/routes/orders.test.js  (4 tests) 4ms
+ ✓ src/routes/orders.test.js  (5 tests) 5ms
+ ✓ src/routes/orders.test.js  (6 tests) 6ms
+ ✓ src/routes/orders.test.js  (7 tests) 7ms
+ ✓ src/routes/orders.test.js  (8 tests) 8ms
+ ✓ src/routes/orders.test.js  (4 tests) 2ms
+ ✓ src/routes/orders.test.js  (5 tests) 3ms
+ ✓ src/routes/orders.test.js  (6 tests) 4ms
+ ✓ src/routes/orders.test.js  (7 tests) 5ms
+ ✓ src/routes/orders.test.js  (8 tests) 6ms
+ ✓ src/routes/orders.test.js  (4 tests) 7ms
+ ✓ src/routes/orders.test.js  (5 tests) 8ms
+ ✓ src/routes/orders.test.js  (6 tests) 2ms
+ ✓ src/routes/orders.test.js  (7 tests) 3ms
+ ✓ src/routes/orders.test.js  (8 tests) 4ms
+ ✓ src/routes/orders.test.js  (4 tests) 5ms
+ ✓ src/routes/orders.test.js  (5 tests) 6ms
+ ✓ src/routes/orders.test.js  (6 tests) 7ms
+ ✓ src/routes/orders.test.js  (7 tests) 8ms
+ ✓ src/routes/orders.test.js  (8 tests) 2ms
+
+ Test Files  1 failed | 12 passed (13)
+      Tests  1 failed | 214 passed (215)
+   Start at  09:41:02
+   Duration  4.31s

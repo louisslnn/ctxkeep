@@ -1,0 +1,11 @@
+{
+  "name": "bash-test-run-failure",
+  "tool": "Bash",
+  "textFile": "bash-test-run-failure.txt",
+  "critical": [
+    "AssertionError",
+    "expected 200 to deeply equal 401",
+    "FAIL  src/auth.test.js",
+    "1 failed \\| 214 passed"
+  ]
+}

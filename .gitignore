@@ -1,0 +1,4 @@
+node_modules/
+
+# ctxkeep artifact cache, session state and metrics ledger (see src/config.js)
+.ctxkeep/

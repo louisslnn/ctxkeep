@@ -1,0 +1,9 @@
+{
+  "name": "bash-short-passthrough",
+  "tool": "Bash",
+  "text": "$ npm run build\n\n> api@1.4.0 build\n> tsc -p tsconfig.json\n\nBuild succeeded in 1.9s\n",
+  "critical": [
+    "Build succeeded",
+    "npm run build"
+  ]
+}

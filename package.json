@@ -1,0 +1,33 @@
+{
+  "name": "ctxkeep",
+  "version": "0.1.0",
+  "description": "Context and token management for Claude Code. Prunes bulky tool output before it enters the context window, dedupes repeat file reads, and persists durable project memory across compactions.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "ctxkeep": "./bin/cli.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "hooks",
+    "skills",
+    ".claude-plugin",
+    "README.md"
+  ],
+  "keywords": [
+    "claude-code",
+    "claude-code-plugin",
+    "context",
+    "tokens",
+    "hooks"
+  ],
+  "scripts": {
+    "test": "node --test 'test/*.test.js'",
+    "eval": "node eval/harness.js"
+  },
+  "dependencies": {}
+}

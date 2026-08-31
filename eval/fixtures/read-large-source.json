@@ -1,0 +1,11 @@
+{
+  "name": "read-large-source",
+  "tool": "Read",
+  "textFile": "read-large-source.txt",
+  "filePath": "/srv/api/src/server.js",
+  "critical": [
+    "import express from",
+    "export function createServer",
+    "export default app"
+  ]
+}
