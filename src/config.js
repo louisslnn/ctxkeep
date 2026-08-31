@@ -51,6 +51,10 @@ export const DEFAULTS = {
     maxInjectedChars: 7000,
   },
 
+  // Pruned artifacts under <cacheDir>/cache/ are swept on SessionStart once
+  // they age past this window. Nothing else deletes them. 0 disables the sweep.
+  cache: { retentionDays: 7 },
+
   metrics: { enabled: true },
 
   // Files that must never be pruned — chiefly the cache itself, otherwise

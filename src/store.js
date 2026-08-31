@@ -1,4 +1,13 @@
-import { mkdirSync, writeFileSync, readFileSync, existsSync, appendFileSync } from "node:fs";
+import {
+  mkdirSync,
+  writeFileSync,
+  readFileSync,
+  existsSync,
+  appendFileSync,
+  readdirSync,
+  statSync,
+  unlinkSync,
+} from "node:fs";
 import { join } from "node:path";
 
 /**
@@ -32,6 +41,43 @@ export function stashArtifact(config, toolUseId, text) {
   const path = cachePath(config, toolUseId);
   writeFileSync(path, text, "utf8");
   return path;
+}
+
+/**
+ * Age-based sweep of the artifact cache. Nothing else ever deletes these files,
+ * so a long-lived project would accumulate thousands. Runs on SessionStart —
+ * NEVER on PostToolUse, which is the hot path — and only touches files past the
+ * configured retention window. Best-effort: a failed unlink is skipped, never
+ * fatal. Returns the number of files removed. `retentionDays <= 0` disables it.
+ */
+export function sweepCache(config, now = Date.now()) {
+  const days = config.cache?.retentionDays;
+  if (!days || days <= 0) return 0;
+  const dir = join(config.cacheRoot, "cache");
+  if (!existsSync(dir)) return 0;
+
+  const cutoff = now - days * 24 * 60 * 60 * 1000;
+  let entries;
+  try {
+    entries = readdirSync(dir);
+  } catch {
+    return 0;
+  }
+
+  let removed = 0;
+  for (const name of entries) {
+    const path = join(dir, name);
+    try {
+      const st = statSync(path);
+      if (st.isFile() && st.mtimeMs < cutoff) {
+        unlinkSync(path);
+        removed++;
+      }
+    } catch {
+      /* file vanished or is unreadable — leave it */
+    }
+  }
+  return removed;
 }
 
 function statePath(config, sessionId) {

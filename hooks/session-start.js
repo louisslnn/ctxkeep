@@ -13,7 +13,7 @@
 import { readInput, emit, guard } from "../src/io.js";
 import { loadConfig } from "../src/config.js";
 import { buildDigest } from "../src/memory.js";
-import { appendState } from "../src/store.js";
+import { appendState, sweepCache } from "../src/store.js";
 
 guard(async () => {
   const input = await readInput();
@@ -25,6 +25,9 @@ guard(async () => {
   // epoch and the compaction gate never fires. Written before the digest early
   // return so the gate works even when memory is still the empty template.
   appendState(config, input.session_id, { startedAt: Date.now() });
+
+  // Garbage-collect aged artifacts here, off the hot path. Never in PostToolUse.
+  sweepCache(config);
 
   const digest = buildDigest(config);
   if (!digest) return;
