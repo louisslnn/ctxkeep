@@ -101,3 +101,59 @@ and unpulled, the blob is low-risk but still bloats the pack. If the `.vsix` was
 ever pushed to a public remote, treat its contents as already disclosed —
 rewriting removes it from the tip, not from anyone's existing clone or GitHub's
 cached views.
+
+---
+
+## 0.5 — Two false install claims in the README  *(needs your call on install strategy)*
+
+The README documents two install paths that do not work today:
+
+1. `npm install -g ctxkeep` — the package is **not published** (npm confirms the
+   name is free, i.e. nothing is there).
+2. `/plugin install ctxkeep@your-marketplace` — `your-marketplace` is a literal
+   placeholder; no marketplace exists.
+
+Per your instruction I did **not** run `npm publish`, did **not** create a
+marketplace repo, and left the README untouched. Here is what each option costs
+so you can choose.
+
+**Option A — Publish to npm** (makes claim 1 true)
+- Settle the package name first (blocked task 0.1); publishing bakes it in.
+- `npm login` with an npmjs account (enable 2FA / a granular automation token).
+- Add a `repository` field to `package.json` (currently missing) and a
+  `prepublishOnly: "npm test && npm run eval"` guard so a broken build can't ship.
+- `npm publish --access public` (name is unscoped, so public is the only option).
+- Verify from a clean machine: `npm install -g <name> && <name> doctor`.
+- Ongoing cost: every release is `npm version <patch|minor> && npm publish`.
+
+**Option B — Set up a Claude Code plugin marketplace** (makes claim 2 true)
+- A marketplace is a git repo containing a `.claude-plugin/marketplace.json`
+  manifest that lists plugins and where their source lives. This repo can be its
+  own marketplace (it already has a valid `.claude-plugin/plugin.json` after 0.2).
+- Add `.claude-plugin/marketplace.json` naming the marketplace and pointing an
+  entry at this plugin, then users run
+  `/plugin marketplace add louisslnn/HyperCompressor` followed by
+  `/plugin install <name>@<marketplace-name>`.
+- Replace the README's `your-marketplace` with the real marketplace name.
+- Confirm the exact `marketplace.json` schema against current Claude Code plugin
+  docs before publishing it — I did not want to guess the schema into a committed
+  file.
+
+**Option C — Neither: tell the truth from source** (zero infra, satisfies the
+task's "…or removed" clause)
+- Replace claim 1 with install-from-source:
+  `git clone https://github.com/louisslnn/HyperCompressor && cd HyperCompressor && npm install -g .`
+  (or `npm link`), then `<name> init` / `<name> doctor`.
+- Remove the `/plugin install …@your-marketplace` line (or point it at a local
+  path once a marketplace exists).
+
+**Recommendation: Option C now, revisit A+B after Phase 2.4.** The project's own
+TASKS.md calls the Phase 2.4 benchmark "the task that decides whether the project
+is useful or just plausible." Publishing to npm and standing up a marketplace
+before that number exists advertises reach the tool hasn't earned. Fix the README
+honestly from source today; publish once the benchmark justifies it. If you'd
+rather ship now, do A and B together so both README claims become true at once.
+
+**What I need from you:** pick A, B, or C (I can then execute the README edits
+and, for A/B, prep the manifests — but I will not run `npm publish` or push a
+marketplace without you).
