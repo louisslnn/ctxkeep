@@ -35,20 +35,35 @@ export function pruneLines(text, rule) {
     }
   }
 
+  // The elision marker states the ORIGINAL 1-based source line range it stands
+  // in for. Read content reaches the hook without line-number prefixes, so once
+  // the middle is elided the surviving tail would otherwise be renumbered on
+  // display and a model reasoning about line positions would be wrong. Naming
+  // the elided range keeps every kept line's true position recoverable: the head
+  // is lines 1..headLines and the tail begins one past the last marker's range.
+  const marker = (startIdx, count) => {
+    const from = startIdx + 1;
+    const to = startIdx + count;
+    const range = count === 1 ? `original line ${from}` : `original lines ${from}-${to}`;
+    return `… ${count} line${count === 1 ? "" : "s"} elided … (${range})`;
+  };
+
   const out = [];
   let gap = 0;
+  let gapStart = 0;
   for (let i = 0; i < lines.length; i++) {
     if (kept.has(i)) {
       if (gap > 0) {
-        out.push(`… ${gap} line${gap === 1 ? "" : "s"} elided …`);
+        out.push(marker(gapStart, gap));
         gap = 0;
       }
       out.push(lines[i]);
     } else {
+      if (gap === 0) gapStart = i;
       gap++;
     }
   }
-  if (gap > 0) out.push(`… ${gap} line${gap === 1 ? "" : "s"} elided …`);
+  if (gap > 0) out.push(marker(gapStart, gap));
 
   return {
     text: out.join("\n"),

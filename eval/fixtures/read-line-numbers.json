@@ -1,0 +1,12 @@
+{
+  "name": "read-line-numbers",
+  "tool": "Read",
+  "textFile": "read-line-numbers.txt",
+  "filePath": "/srv/app/numbered.js",
+  "critical": [
+    "^100: source line 100$",
+    "^861: source line 861$",
+    "^900: source line 900$",
+    "original lines 101-860"
+  ]
+}
