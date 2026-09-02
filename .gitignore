@@ -5,3 +5,9 @@ node_modules/
 
 # VS Code extension packages do not belong in this repo (see TASKS.md 0.3)
 *.vsix
+
+.qodo
+
+# macOS finder metadata
+.DS_Store
+
