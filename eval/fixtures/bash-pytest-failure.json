@@ -1,0 +1,11 @@
+{
+  "name": "bash-pytest-failure",
+  "tool": "Bash",
+  "textFile": "bash-pytest-failure.txt",
+  "critical": [
+    "assert 200 == 401",
+    "ValueError: invalid literal for int",
+    "AssertionError",
+    "4 failed, 140 passed"
+  ]
+}

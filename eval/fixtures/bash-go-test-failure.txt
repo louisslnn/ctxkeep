@@ -1,0 +1,312 @@
+=== RUN   TestStable1
+--- PASS: TestStable1 (0.00s)
+=== RUN   TestStable2
+--- PASS: TestStable2 (0.00s)
+=== RUN   TestStable3
+--- PASS: TestStable3 (0.00s)
+=== RUN   TestStable4
+--- PASS: TestStable4 (0.00s)
+=== RUN   TestStable5
+--- PASS: TestStable5 (0.00s)
+=== RUN   TestStable6
+--- PASS: TestStable6 (0.00s)
+=== RUN   TestStable7
+--- PASS: TestStable7 (0.00s)
+=== RUN   TestStable8
+--- PASS: TestStable8 (0.00s)
+=== RUN   TestStable9
+--- PASS: TestStable9 (0.00s)
+=== RUN   TestStable10
+--- PASS: TestStable10 (0.00s)
+=== RUN   TestStable11
+--- PASS: TestStable11 (0.00s)
+=== RUN   TestStable12
+--- PASS: TestStable12 (0.00s)
+=== RUN   TestStable13
+--- PASS: TestStable13 (0.00s)
+=== RUN   TestStable14
+--- PASS: TestStable14 (0.00s)
+=== RUN   TestStable15
+--- PASS: TestStable15 (0.00s)
+=== RUN   TestStable16
+--- PASS: TestStable16 (0.00s)
+=== RUN   TestStable17
+--- PASS: TestStable17 (0.00s)
+=== RUN   TestStable18
+--- PASS: TestStable18 (0.00s)
+=== RUN   TestStable19
+--- PASS: TestStable19 (0.00s)
+=== RUN   TestStable20
+--- PASS: TestStable20 (0.00s)
+=== RUN   TestStable21
+--- PASS: TestStable21 (0.00s)
+=== RUN   TestStable22
+--- PASS: TestStable22 (0.00s)
+=== RUN   TestStable23
+--- PASS: TestStable23 (0.00s)
+=== RUN   TestStable24
+--- PASS: TestStable24 (0.00s)
+=== RUN   TestStable25
+--- PASS: TestStable25 (0.00s)
+=== RUN   TestStable26
+--- PASS: TestStable26 (0.00s)
+=== RUN   TestStable27
+--- PASS: TestStable27 (0.00s)
+=== RUN   TestStable28
+--- PASS: TestStable28 (0.00s)
+=== RUN   TestStable29
+--- PASS: TestStable29 (0.00s)
+=== RUN   TestStable30
+--- PASS: TestStable30 (0.00s)
+=== RUN   TestStable31
+--- PASS: TestStable31 (0.00s)
+=== RUN   TestStable32
+--- PASS: TestStable32 (0.00s)
+=== RUN   TestStable33
+--- PASS: TestStable33 (0.00s)
+=== RUN   TestStable34
+--- PASS: TestStable34 (0.00s)
+=== RUN   TestStable35
+--- PASS: TestStable35 (0.00s)
+=== RUN   TestStable36
+--- PASS: TestStable36 (0.00s)
+=== RUN   TestStable37
+--- PASS: TestStable37 (0.00s)
+=== RUN   TestStable38
+--- PASS: TestStable38 (0.00s)
+=== RUN   TestStable39
+--- PASS: TestStable39 (0.00s)
+=== RUN   TestStable40
+--- PASS: TestStable40 (0.00s)
+=== RUN   TestStable41
+--- PASS: TestStable41 (0.00s)
+=== RUN   TestStable42
+--- PASS: TestStable42 (0.00s)
+=== RUN   TestStable43
+--- PASS: TestStable43 (0.00s)
+=== RUN   TestStable44
+--- PASS: TestStable44 (0.00s)
+=== RUN   TestStable45
+--- PASS: TestStable45 (0.00s)
+=== RUN   TestStable46
+--- PASS: TestStable46 (0.00s)
+=== RUN   TestStable47
+--- PASS: TestStable47 (0.00s)
+=== RUN   TestStable48
+--- PASS: TestStable48 (0.00s)
+=== RUN   TestStable49
+--- PASS: TestStable49 (0.00s)
+=== RUN   TestStable50
+--- PASS: TestStable50 (0.00s)
+=== RUN   TestStable51
+--- PASS: TestStable51 (0.00s)
+=== RUN   TestStable52
+--- PASS: TestStable52 (0.00s)
+=== RUN   TestStable53
+--- PASS: TestStable53 (0.00s)
+=== RUN   TestStable54
+--- PASS: TestStable54 (0.00s)
+=== RUN   TestStable55
+--- PASS: TestStable55 (0.00s)
+=== RUN   TestStable56
+--- PASS: TestStable56 (0.00s)
+=== RUN   TestStable57
+--- PASS: TestStable57 (0.00s)
+=== RUN   TestStable58
+--- PASS: TestStable58 (0.00s)
+=== RUN   TestStable59
+--- PASS: TestStable59 (0.00s)
+=== RUN   TestStable60
+--- PASS: TestStable60 (0.00s)
+=== RUN   TestDiscountApplies
+    calc_test.go:65: expected discounted price 90, got 100
+--- FAIL: TestDiscountApplies (0.00s)
+=== RUN   TestStable61
+--- PASS: TestStable61 (0.00s)
+=== RUN   TestAuthorizeAdmin
+    calc_test.go:67: admin should be authorized, got false
+--- FAIL: TestAuthorizeAdmin (0.00s)
+=== RUN   TestStable62
+--- PASS: TestStable62 (0.00s)
+=== RUN   TestReconcileTotals
+    calc_test.go:69: totals did not reconcile: got 425 want 424
+--- FAIL: TestReconcileTotals (0.00s)
+=== RUN   TestStable63
+--- PASS: TestStable63 (0.00s)
+=== RUN   TestStable64
+--- PASS: TestStable64 (0.00s)
+=== RUN   TestStable65
+--- PASS: TestStable65 (0.00s)
+=== RUN   TestStable66
+--- PASS: TestStable66 (0.00s)
+=== RUN   TestStable67
+--- PASS: TestStable67 (0.00s)
+=== RUN   TestStable68
+--- PASS: TestStable68 (0.00s)
+=== RUN   TestStable69
+--- PASS: TestStable69 (0.00s)
+=== RUN   TestStable70
+--- PASS: TestStable70 (0.00s)
+=== RUN   TestStable71
+--- PASS: TestStable71 (0.00s)
+=== RUN   TestStable72
+--- PASS: TestStable72 (0.00s)
+=== RUN   TestStable73
+--- PASS: TestStable73 (0.00s)
+=== RUN   TestStable74
+--- PASS: TestStable74 (0.00s)
+=== RUN   TestStable75
+--- PASS: TestStable75 (0.00s)
+=== RUN   TestStable76
+--- PASS: TestStable76 (0.00s)
+=== RUN   TestStable77
+--- PASS: TestStable77 (0.00s)
+=== RUN   TestStable78
+--- PASS: TestStable78 (0.00s)
+=== RUN   TestStable79
+--- PASS: TestStable79 (0.00s)
+=== RUN   TestStable80
+--- PASS: TestStable80 (0.00s)
+=== RUN   TestStable81
+--- PASS: TestStable81 (0.00s)
+=== RUN   TestStable82
+--- PASS: TestStable82 (0.00s)
+=== RUN   TestStable83
+--- PASS: TestStable83 (0.00s)
+=== RUN   TestStable84
+--- PASS: TestStable84 (0.00s)
+=== RUN   TestStable85
+--- PASS: TestStable85 (0.00s)
+=== RUN   TestStable86
+--- PASS: TestStable86 (0.00s)
+=== RUN   TestStable87
+--- PASS: TestStable87 (0.00s)
+=== RUN   TestStable88
+--- PASS: TestStable88 (0.00s)
+=== RUN   TestStable89
+--- PASS: TestStable89 (0.00s)
+=== RUN   TestStable90
+--- PASS: TestStable90 (0.00s)
+=== RUN   TestStable91
+--- PASS: TestStable91 (0.00s)
+=== RUN   TestStable92
+--- PASS: TestStable92 (0.00s)
+=== RUN   TestStable93
+--- PASS: TestStable93 (0.00s)
+=== RUN   TestStable94
+--- PASS: TestStable94 (0.00s)
+=== RUN   TestStable95
+--- PASS: TestStable95 (0.00s)
+=== RUN   TestStable96
+--- PASS: TestStable96 (0.00s)
+=== RUN   TestStable97
+--- PASS: TestStable97 (0.00s)
+=== RUN   TestStable98
+--- PASS: TestStable98 (0.00s)
+=== RUN   TestStable99
+--- PASS: TestStable99 (0.00s)
+=== RUN   TestStable100
+--- PASS: TestStable100 (0.00s)
+=== RUN   TestStable101
+--- PASS: TestStable101 (0.00s)
+=== RUN   TestStable102
+--- PASS: TestStable102 (0.00s)
+=== RUN   TestStable103
+--- PASS: TestStable103 (0.00s)
+=== RUN   TestStable104
+--- PASS: TestStable104 (0.00s)
+=== RUN   TestStable105
+--- PASS: TestStable105 (0.00s)
+=== RUN   TestStable106
+--- PASS: TestStable106 (0.00s)
+=== RUN   TestStable107
+--- PASS: TestStable107 (0.00s)
+=== RUN   TestStable108
+--- PASS: TestStable108 (0.00s)
+=== RUN   TestStable109
+--- PASS: TestStable109 (0.00s)
+=== RUN   TestStable110
+--- PASS: TestStable110 (0.00s)
+=== RUN   TestStable111
+--- PASS: TestStable111 (0.00s)
+=== RUN   TestStable112
+--- PASS: TestStable112 (0.00s)
+=== RUN   TestStable113
+--- PASS: TestStable113 (0.00s)
+=== RUN   TestStable114
+--- PASS: TestStable114 (0.00s)
+=== RUN   TestStable115
+--- PASS: TestStable115 (0.00s)
+=== RUN   TestStable116
+--- PASS: TestStable116 (0.00s)
+=== RUN   TestStable117
+--- PASS: TestStable117 (0.00s)
+=== RUN   TestStable118
+--- PASS: TestStable118 (0.00s)
+=== RUN   TestStable119
+--- PASS: TestStable119 (0.00s)
+=== RUN   TestStable120
+--- PASS: TestStable120 (0.00s)
+=== RUN   TestStable121
+--- PASS: TestStable121 (0.00s)
+=== RUN   TestStable122
+--- PASS: TestStable122 (0.00s)
+=== RUN   TestStable123
+--- PASS: TestStable123 (0.00s)
+=== RUN   TestStable124
+--- PASS: TestStable124 (0.00s)
+=== RUN   TestStable125
+--- PASS: TestStable125 (0.00s)
+=== RUN   TestStable126
+--- PASS: TestStable126 (0.00s)
+=== RUN   TestStable127
+--- PASS: TestStable127 (0.00s)
+=== RUN   TestStable128
+--- PASS: TestStable128 (0.00s)
+=== RUN   TestStable129
+--- PASS: TestStable129 (0.00s)
+=== RUN   TestStable130
+--- PASS: TestStable130 (0.00s)
+=== RUN   TestStable131
+--- PASS: TestStable131 (0.00s)
+=== RUN   TestStable132
+--- PASS: TestStable132 (0.00s)
+=== RUN   TestStable133
+--- PASS: TestStable133 (0.00s)
+=== RUN   TestStable134
+--- PASS: TestStable134 (0.00s)
+=== RUN   TestStable135
+--- PASS: TestStable135 (0.00s)
+=== RUN   TestStable136
+--- PASS: TestStable136 (0.00s)
+=== RUN   TestStable137
+--- PASS: TestStable137 (0.00s)
+=== RUN   TestStable138
+--- PASS: TestStable138 (0.00s)
+=== RUN   TestStable139
+--- PASS: TestStable139 (0.00s)
+=== RUN   TestStable140
+--- PASS: TestStable140 (0.00s)
+=== RUN   TestStable141
+--- PASS: TestStable141 (0.00s)
+=== RUN   TestStable142
+--- PASS: TestStable142 (0.00s)
+=== RUN   TestStable143
+--- PASS: TestStable143 (0.00s)
+=== RUN   TestStable144
+--- PASS: TestStable144 (0.00s)
+=== RUN   TestStable145
+--- PASS: TestStable145 (0.00s)
+=== RUN   TestStable146
+--- PASS: TestStable146 (0.00s)
+=== RUN   TestStable147
+--- PASS: TestStable147 (0.00s)
+=== RUN   TestStable148
+--- PASS: TestStable148 (0.00s)
+=== RUN   TestStable149
+--- PASS: TestStable149 (0.00s)
+=== RUN   TestStable150
+--- PASS: TestStable150 (0.00s)
+FAIL
+FAIL	example/pkg	0.432s
+FAIL

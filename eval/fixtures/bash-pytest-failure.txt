@@ -1,0 +1,199 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.14.0, pytest-9.1.1, pluggy-1.6.0 -- /private/tmp/ctxkeep-pyfix-00xH/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /private/tmp/ctxkeep-pyfix-00xH
+collecting ... collected 144 items
+
+test_service.py::test_arithmetic_is_stable[0] PASSED                     [  0%]
+test_service.py::test_arithmetic_is_stable[1] PASSED                     [  1%]
+test_service.py::test_arithmetic_is_stable[2] PASSED                     [  2%]
+test_service.py::test_arithmetic_is_stable[3] PASSED                     [  2%]
+test_service.py::test_arithmetic_is_stable[4] PASSED                     [  3%]
+test_service.py::test_arithmetic_is_stable[5] PASSED                     [  4%]
+test_service.py::test_arithmetic_is_stable[6] PASSED                     [  4%]
+test_service.py::test_arithmetic_is_stable[7] PASSED                     [  5%]
+test_service.py::test_arithmetic_is_stable[8] PASSED                     [  6%]
+test_service.py::test_arithmetic_is_stable[9] PASSED                     [  6%]
+test_service.py::test_arithmetic_is_stable[10] PASSED                    [  7%]
+test_service.py::test_arithmetic_is_stable[11] PASSED                    [  8%]
+test_service.py::test_arithmetic_is_stable[12] PASSED                    [  9%]
+test_service.py::test_arithmetic_is_stable[13] PASSED                    [  9%]
+test_service.py::test_arithmetic_is_stable[14] PASSED                    [ 10%]
+test_service.py::test_arithmetic_is_stable[15] PASSED                    [ 11%]
+test_service.py::test_arithmetic_is_stable[16] PASSED                    [ 11%]
+test_service.py::test_arithmetic_is_stable[17] PASSED                    [ 12%]
+test_service.py::test_arithmetic_is_stable[18] PASSED                    [ 13%]
+test_service.py::test_arithmetic_is_stable[19] PASSED                    [ 13%]
+test_service.py::test_arithmetic_is_stable[20] PASSED                    [ 14%]
+test_service.py::test_arithmetic_is_stable[21] PASSED                    [ 15%]
+test_service.py::test_arithmetic_is_stable[22] PASSED                    [ 15%]
+test_service.py::test_arithmetic_is_stable[23] PASSED                    [ 16%]
+test_service.py::test_arithmetic_is_stable[24] PASSED                    [ 17%]
+test_service.py::test_arithmetic_is_stable[25] PASSED                    [ 18%]
+test_service.py::test_arithmetic_is_stable[26] PASSED                    [ 18%]
+test_service.py::test_arithmetic_is_stable[27] PASSED                    [ 19%]
+test_service.py::test_arithmetic_is_stable[28] PASSED                    [ 20%]
+test_service.py::test_arithmetic_is_stable[29] PASSED                    [ 20%]
+test_service.py::test_arithmetic_is_stable[30] PASSED                    [ 21%]
+test_service.py::test_arithmetic_is_stable[31] PASSED                    [ 22%]
+test_service.py::test_arithmetic_is_stable[32] PASSED                    [ 22%]
+test_service.py::test_arithmetic_is_stable[33] PASSED                    [ 23%]
+test_service.py::test_arithmetic_is_stable[34] PASSED                    [ 24%]
+test_service.py::test_arithmetic_is_stable[35] PASSED                    [ 25%]
+test_service.py::test_arithmetic_is_stable[36] PASSED                    [ 25%]
+test_service.py::test_arithmetic_is_stable[37] PASSED                    [ 26%]
+test_service.py::test_arithmetic_is_stable[38] PASSED                    [ 27%]
+test_service.py::test_arithmetic_is_stable[39] PASSED                    [ 27%]
+test_service.py::test_arithmetic_is_stable[40] PASSED                    [ 28%]
+test_service.py::test_arithmetic_is_stable[41] PASSED                    [ 29%]
+test_service.py::test_arithmetic_is_stable[42] PASSED                    [ 29%]
+test_service.py::test_arithmetic_is_stable[43] PASSED                    [ 30%]
+test_service.py::test_arithmetic_is_stable[44] PASSED                    [ 31%]
+test_service.py::test_arithmetic_is_stable[45] PASSED                    [ 31%]
+test_service.py::test_arithmetic_is_stable[46] PASSED                    [ 32%]
+test_service.py::test_arithmetic_is_stable[47] PASSED                    [ 33%]
+test_service.py::test_arithmetic_is_stable[48] PASSED                    [ 34%]
+test_service.py::test_arithmetic_is_stable[49] PASSED                    [ 34%]
+test_service.py::test_arithmetic_is_stable[50] PASSED                    [ 35%]
+test_service.py::test_arithmetic_is_stable[51] PASSED                    [ 36%]
+test_service.py::test_arithmetic_is_stable[52] PASSED                    [ 36%]
+test_service.py::test_arithmetic_is_stable[53] PASSED                    [ 37%]
+test_service.py::test_arithmetic_is_stable[54] PASSED                    [ 38%]
+test_service.py::test_arithmetic_is_stable[55] PASSED                    [ 38%]
+test_service.py::test_arithmetic_is_stable[56] PASSED                    [ 39%]
+test_service.py::test_arithmetic_is_stable[57] PASSED                    [ 40%]
+test_service.py::test_arithmetic_is_stable[58] PASSED                    [ 40%]
+test_service.py::test_arithmetic_is_stable[59] PASSED                    [ 41%]
+test_service.py::test_arithmetic_is_stable[60] PASSED                    [ 42%]
+test_service.py::test_arithmetic_is_stable[61] PASSED                    [ 43%]
+test_service.py::test_arithmetic_is_stable[62] PASSED                    [ 43%]
+test_service.py::test_arithmetic_is_stable[63] PASSED                    [ 44%]
+test_service.py::test_arithmetic_is_stable[64] PASSED                    [ 45%]
+test_service.py::test_arithmetic_is_stable[65] PASSED                    [ 45%]
+test_service.py::test_arithmetic_is_stable[66] PASSED                    [ 46%]
+test_service.py::test_arithmetic_is_stable[67] PASSED                    [ 47%]
+test_service.py::test_arithmetic_is_stable[68] PASSED                    [ 47%]
+test_service.py::test_arithmetic_is_stable[69] PASSED                    [ 48%]
+test_service.py::test_arithmetic_is_stable[70] PASSED                    [ 49%]
+test_service.py::test_arithmetic_is_stable[71] PASSED                    [ 50%]
+test_service.py::test_arithmetic_is_stable[72] PASSED                    [ 50%]
+test_service.py::test_arithmetic_is_stable[73] PASSED                    [ 51%]
+test_service.py::test_arithmetic_is_stable[74] PASSED                    [ 52%]
+test_service.py::test_arithmetic_is_stable[75] PASSED                    [ 52%]
+test_service.py::test_arithmetic_is_stable[76] PASSED                    [ 53%]
+test_service.py::test_arithmetic_is_stable[77] PASSED                    [ 54%]
+test_service.py::test_arithmetic_is_stable[78] PASSED                    [ 54%]
+test_service.py::test_arithmetic_is_stable[79] PASSED                    [ 55%]
+test_service.py::test_arithmetic_is_stable[80] PASSED                    [ 56%]
+test_service.py::test_arithmetic_is_stable[81] PASSED                    [ 56%]
+test_service.py::test_arithmetic_is_stable[82] PASSED                    [ 57%]
+test_service.py::test_arithmetic_is_stable[83] PASSED                    [ 58%]
+test_service.py::test_arithmetic_is_stable[84] PASSED                    [ 59%]
+test_service.py::test_arithmetic_is_stable[85] PASSED                    [ 59%]
+test_service.py::test_arithmetic_is_stable[86] PASSED                    [ 60%]
+test_service.py::test_arithmetic_is_stable[87] PASSED                    [ 61%]
+test_service.py::test_arithmetic_is_stable[88] PASSED                    [ 61%]
+test_service.py::test_arithmetic_is_stable[89] PASSED                    [ 62%]
+test_service.py::test_arithmetic_is_stable[90] PASSED                    [ 63%]
+test_service.py::test_arithmetic_is_stable[91] PASSED                    [ 63%]
+test_service.py::test_arithmetic_is_stable[92] PASSED                    [ 64%]
+test_service.py::test_arithmetic_is_stable[93] PASSED                    [ 65%]
+test_service.py::test_arithmetic_is_stable[94] PASSED                    [ 65%]
+test_service.py::test_arithmetic_is_stable[95] PASSED                    [ 66%]
+test_service.py::test_arithmetic_is_stable[96] PASSED                    [ 67%]
+test_service.py::test_arithmetic_is_stable[97] PASSED                    [ 68%]
+test_service.py::test_arithmetic_is_stable[98] PASSED                    [ 68%]
+test_service.py::test_arithmetic_is_stable[99] PASSED                    [ 69%]
+test_service.py::test_arithmetic_is_stable[100] PASSED                   [ 70%]
+test_service.py::test_arithmetic_is_stable[101] PASSED                   [ 70%]
+test_service.py::test_arithmetic_is_stable[102] PASSED                   [ 71%]
+test_service.py::test_arithmetic_is_stable[103] PASSED                   [ 72%]
+test_service.py::test_arithmetic_is_stable[104] PASSED                   [ 72%]
+test_service.py::test_arithmetic_is_stable[105] PASSED                   [ 73%]
+test_service.py::test_arithmetic_is_stable[106] PASSED                   [ 74%]
+test_service.py::test_arithmetic_is_stable[107] PASSED                   [ 75%]
+test_service.py::test_arithmetic_is_stable[108] PASSED                   [ 75%]
+test_service.py::test_arithmetic_is_stable[109] PASSED                   [ 76%]
+test_service.py::test_arithmetic_is_stable[110] PASSED                   [ 77%]
+test_service.py::test_arithmetic_is_stable[111] PASSED                   [ 77%]
+test_service.py::test_arithmetic_is_stable[112] PASSED                   [ 78%]
+test_service.py::test_arithmetic_is_stable[113] PASSED                   [ 79%]
+test_service.py::test_arithmetic_is_stable[114] PASSED                   [ 79%]
+test_service.py::test_arithmetic_is_stable[115] PASSED                   [ 80%]
+test_service.py::test_arithmetic_is_stable[116] PASSED                   [ 81%]
+test_service.py::test_arithmetic_is_stable[117] PASSED                   [ 81%]
+test_service.py::test_arithmetic_is_stable[118] PASSED                   [ 82%]
+test_service.py::test_arithmetic_is_stable[119] PASSED                   [ 83%]
+test_service.py::test_arithmetic_is_stable[120] PASSED                   [ 84%]
+test_service.py::test_arithmetic_is_stable[121] PASSED                   [ 84%]
+test_service.py::test_arithmetic_is_stable[122] PASSED                   [ 85%]
+test_service.py::test_arithmetic_is_stable[123] PASSED                   [ 86%]
+test_service.py::test_arithmetic_is_stable[124] PASSED                   [ 86%]
+test_service.py::test_arithmetic_is_stable[125] PASSED                   [ 87%]
+test_service.py::test_arithmetic_is_stable[126] PASSED                   [ 88%]
+test_service.py::test_arithmetic_is_stable[127] PASSED                   [ 88%]
+test_service.py::test_arithmetic_is_stable[128] PASSED                   [ 89%]
+test_service.py::test_arithmetic_is_stable[129] PASSED                   [ 90%]
+test_service.py::test_arithmetic_is_stable[130] PASSED                   [ 90%]
+test_service.py::test_arithmetic_is_stable[131] PASSED                   [ 91%]
+test_service.py::test_arithmetic_is_stable[132] PASSED                   [ 92%]
+test_service.py::test_arithmetic_is_stable[133] PASSED                   [ 93%]
+test_service.py::test_arithmetic_is_stable[134] PASSED                   [ 93%]
+test_service.py::test_arithmetic_is_stable[135] PASSED                   [ 94%]
+test_service.py::test_arithmetic_is_stable[136] PASSED                   [ 95%]
+test_service.py::test_arithmetic_is_stable[137] PASSED                   [ 95%]
+test_service.py::test_arithmetic_is_stable[138] PASSED                   [ 96%]
+test_service.py::test_arithmetic_is_stable[139] PASSED                   [ 97%]
+test_service.py::test_login_returns_unauthorized FAILED                  [ 97%]
+test_service.py::test_parse_config_rejects_bad_port FAILED               [ 98%]
+test_service.py::test_totals_reconcile FAILED                            [ 99%]
+test_service.py::test_feature_flag_defaults_off FAILED                   [100%]
+
+=================================== FAILURES ===================================
+_______________________ test_login_returns_unauthorized ________________________
+
+    def test_login_returns_unauthorized():
+        status = authenticate(user="nobody", password="wrong")
+>       assert status == 401
+E       assert 200 == 401
+
+test_service.py:9: AssertionError
+______________________ test_parse_config_rejects_bad_port ______________________
+
+    def test_parse_config_rejects_bad_port():
+>       parse_port("not-a-number")
+
+test_service.py:16: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = 'not-a-number'
+
+    def parse_port(value):
+>       return int(value)
+               ^^^^^^^^^^
+E       ValueError: invalid literal for int() with base 10: 'not-a-number'
+
+test_service.py:19: ValueError
+____________________________ test_totals_reconcile _____________________________
+
+    def test_totals_reconcile():
+        invoices = [100, 250, 75]
+>       assert sum(invoices) == 424
+E       assert 425 == 424
+E        +  where 425 = sum([100, 250, 75])
+
+test_service.py:23: AssertionError
+________________________ test_feature_flag_defaults_off ________________________
+
+    def test_feature_flag_defaults_off():
+        flags = {"beta": False}
+>       assert flags["beta"] is True
+E       assert False is True
+
+test_service.py:27: AssertionError
+=========================== short test summary info ============================
+FAILED test_service.py::test_login_returns_unauthorized - assert 200 == 401
+FAILED test_service.py::test_parse_config_rejects_bad_port - ValueError: inva...
+FAILED test_service.py::test_totals_reconcile - assert 425 == 424
+FAILED test_service.py::test_feature_flag_defaults_off - assert False is True
+======================== 4 failed, 140 passed in 0.09s =========================

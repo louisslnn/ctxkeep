@@ -1,0 +1,11 @@
+{
+  "name": "bash-cargo-test-failure",
+  "tool": "Bash",
+  "textFile": "bash-cargo-test-failure.txt",
+  "critical": [
+    "discount_applies \\.\\.\\. FAILED",
+    "assertion `left == right` failed",
+    "panicked at src/lib\\.rs",
+    "test result: FAILED\\. 150 passed; 2 failed"
+  ]
+}

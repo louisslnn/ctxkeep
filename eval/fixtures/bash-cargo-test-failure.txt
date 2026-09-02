@@ -1,0 +1,181 @@
+   Compiling billing v0.1.0 (/private/tmp/ctxkeep-rs-XLuX)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.39s
+     Running unittests src/lib.rs (target/debug/deps/billing-b7d44164995d62c8)
+
+running 152 tests
+test tests::authorize_admin ... FAILED
+test tests::discount_applies ... FAILED
+test tests::stable_1 ... ok
+test tests::stable_10 ... ok
+test tests::stable_100 ... ok
+test tests::stable_101 ... ok
+test tests::stable_102 ... ok
+test tests::stable_103 ... ok
+test tests::stable_104 ... ok
+test tests::stable_105 ... ok
+test tests::stable_106 ... ok
+test tests::stable_107 ... ok
+test tests::stable_108 ... ok
+test tests::stable_109 ... ok
+test tests::stable_11 ... ok
+test tests::stable_110 ... ok
+test tests::stable_111 ... ok
+test tests::stable_112 ... ok
+test tests::stable_113 ... ok
+test tests::stable_114 ... ok
+test tests::stable_115 ... ok
+test tests::stable_116 ... ok
+test tests::stable_117 ... ok
+test tests::stable_118 ... ok
+test tests::stable_119 ... ok
+test tests::stable_12 ... ok
+test tests::stable_120 ... ok
+test tests::stable_121 ... ok
+test tests::stable_122 ... ok
+test tests::stable_123 ... ok
+test tests::stable_124 ... ok
+test tests::stable_125 ... ok
+test tests::stable_126 ... ok
+test tests::stable_127 ... ok
+test tests::stable_128 ... ok
+test tests::stable_129 ... ok
+test tests::stable_13 ... ok
+test tests::stable_130 ... ok
+test tests::stable_131 ... ok
+test tests::stable_132 ... ok
+test tests::stable_133 ... ok
+test tests::stable_134 ... ok
+test tests::stable_135 ... ok
+test tests::stable_136 ... ok
+test tests::stable_137 ... ok
+test tests::stable_138 ... ok
+test tests::stable_139 ... ok
+test tests::stable_14 ... ok
+test tests::stable_140 ... ok
+test tests::stable_141 ... ok
+test tests::stable_142 ... ok
+test tests::stable_143 ... ok
+test tests::stable_144 ... ok
+test tests::stable_145 ... ok
+test tests::stable_146 ... ok
+test tests::stable_147 ... ok
+test tests::stable_148 ... ok
+test tests::stable_149 ... ok
+test tests::stable_15 ... ok
+test tests::stable_150 ... ok
+test tests::stable_16 ... ok
+test tests::stable_17 ... ok
+test tests::stable_18 ... ok
+test tests::stable_19 ... ok
+test tests::stable_2 ... ok
+test tests::stable_20 ... ok
+test tests::stable_21 ... ok
+test tests::stable_22 ... ok
+test tests::stable_23 ... ok
+test tests::stable_24 ... ok
+test tests::stable_25 ... ok
+test tests::stable_26 ... ok
+test tests::stable_27 ... ok
+test tests::stable_28 ... ok
+test tests::stable_29 ... ok
+test tests::stable_3 ... ok
+test tests::stable_30 ... ok
+test tests::stable_31 ... ok
+test tests::stable_32 ... ok
+test tests::stable_33 ... ok
+test tests::stable_34 ... ok
+test tests::stable_35 ... ok
+test tests::stable_36 ... ok
+test tests::stable_37 ... ok
+test tests::stable_38 ... ok
+test tests::stable_39 ... ok
+test tests::stable_4 ... ok
+test tests::stable_40 ... ok
+test tests::stable_41 ... ok
+test tests::stable_42 ... ok
+test tests::stable_43 ... ok
+test tests::stable_44 ... ok
+test tests::stable_45 ... ok
+test tests::stable_46 ... ok
+test tests::stable_47 ... ok
+test tests::stable_48 ... ok
+test tests::stable_49 ... ok
+test tests::stable_5 ... ok
+test tests::stable_50 ... ok
+test tests::stable_51 ... ok
+test tests::stable_52 ... ok
+test tests::stable_53 ... ok
+test tests::stable_54 ... ok
+test tests::stable_55 ... ok
+test tests::stable_56 ... ok
+test tests::stable_57 ... ok
+test tests::stable_58 ... ok
+test tests::stable_59 ... ok
+test tests::stable_6 ... ok
+test tests::stable_60 ... ok
+test tests::stable_61 ... ok
+test tests::stable_62 ... ok
+test tests::stable_63 ... ok
+test tests::stable_64 ... ok
+test tests::stable_65 ... ok
+test tests::stable_66 ... ok
+test tests::stable_67 ... ok
+test tests::stable_68 ... ok
+test tests::stable_69 ... ok
+test tests::stable_7 ... ok
+test tests::stable_70 ... ok
+test tests::stable_71 ... ok
+test tests::stable_72 ... ok
+test tests::stable_73 ... ok
+test tests::stable_74 ... ok
+test tests::stable_75 ... ok
+test tests::stable_76 ... ok
+test tests::stable_77 ... ok
+test tests::stable_78 ... ok
+test tests::stable_79 ... ok
+test tests::stable_8 ... ok
+test tests::stable_80 ... ok
+test tests::stable_81 ... ok
+test tests::stable_82 ... ok
+test tests::stable_83 ... ok
+test tests::stable_84 ... ok
+test tests::stable_85 ... ok
+test tests::stable_86 ... ok
+test tests::stable_87 ... ok
+test tests::stable_88 ... ok
+test tests::stable_89 ... ok
+test tests::stable_9 ... ok
+test tests::stable_90 ... ok
+test tests::stable_91 ... ok
+test tests::stable_92 ... ok
+test tests::stable_93 ... ok
+test tests::stable_94 ... ok
+test tests::stable_95 ... ok
+test tests::stable_96 ... ok
+test tests::stable_97 ... ok
+test tests::stable_98 ... ok
+test tests::stable_99 ... ok
+
+failures:
+
+---- tests::authorize_admin stdout ----
+
+thread 'tests::authorize_admin' (39542744) panicked at src/lib.rs:69:36:
+admin should be authorized
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- tests::discount_applies stdout ----
+
+thread 'tests::discount_applies' (39542745) panicked at src/lib.rs:67:37:
+assertion `left == right` failed
+  left: 100
+ right: 90
+
+
+failures:
+    tests::authorize_admin
+    tests::discount_applies
+
+test result: FAILED. 150 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `--lib`

@@ -1,0 +1,11 @@
+{
+  "name": "bash-go-test-failure",
+  "tool": "Bash",
+  "textFile": "bash-go-test-failure.txt",
+  "critical": [
+    "--- FAIL: TestDiscountApplies",
+    "expected discounted price 90, got 100",
+    "totals did not reconcile: got 425 want 424",
+    "FAIL\\s+example/pkg"
+  ]
+}

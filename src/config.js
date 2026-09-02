@@ -21,8 +21,18 @@ export const DEFAULTS = {
       // No leading \b: it must match CamelCase names like AssertionError,
       // TypeError and ValidationException, where the boundary falls inside
       // the word. This cost a fixture on the first eval run.
+      //
+      // Per-ecosystem notes (see eval/fixtures/bash-*-test-failure): pytest and
+      // cargo group their failure detail at the head/tail of the run, so the
+      // head/tail window already captures it. `go test` interleaves failures
+      // through the run, so a mid-run failure lands in the elided middle and
+      // must be salvaged by pattern. The last two alternatives do that:
+      //   \bFAIL\b        — go's "--- FAIL: TestName" markers (standalone FAIL;
+      //                     "failed" already covers FAILED via the group above)
+      //   _test\.go:\d+:  — go's failure location lines, e.g.
+      //                     "calc_test.go:65: expected 90, got 100"
       keepMatching:
-        "(error|fatal|failed|failing|exception|traceback|panic|warn(ing)?)\\b|^\\s*(✗|×|✘|FAIL|ERR!)",
+        "(error|fatal|failed|failing|exception|traceback|panic|warn(ing)?)\\b|^\\s*(✗|×|✘|FAIL|ERR!)|\\bFAIL\\b|_test\\.go:\\d+:",
     },
 
     Grep: { maxLines: 80, headLines: 60, tailLines: 20 },
