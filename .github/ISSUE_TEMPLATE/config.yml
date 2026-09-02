@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Architecture & invariants
+    url: https://github.com/louisslnn/HyperCompressor/blob/main/ARCHITECTURE.md
+    about: Read this before filing a design change — it documents the invariants.
+  - name: Contributing guide
+    url: https://github.com/louisslnn/HyperCompressor/blob/main/CONTRIBUTING.md
+    about: How to run the checks and add an eval fixture.
