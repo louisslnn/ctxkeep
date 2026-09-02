@@ -87,3 +87,21 @@ test("replaceText preserves the original response shape", () => {
     { type: "text", text: "new" },
   ]);
 });
+
+test("replaceText round-trips the Read shape (file.content), not a bare string", () => {
+  // Regression: replaceText used to fall through to a bare string for the Read
+  // shape, which Claude Code silently ignored — so Read pruning never reached
+  // the model. It must return the same nested object with only content swapped.
+  const readResponse = {
+    type: "text",
+    file: { filePath: "/repo/big.js", content: "old body", numLines: 3 },
+  };
+  const out = replaceText(readResponse, "pruned body");
+  assert.equal(typeof out, "object", "must stay an object, not degrade to a string");
+  assert.equal(out.file.content, "pruned body", "content must be replaced");
+  assert.equal(out.type, "text", "sibling fields must be preserved");
+  assert.equal(out.file.filePath, "/repo/big.js", "file metadata must be preserved");
+  assert.equal(out.file.numLines, 3);
+  // extractText must read back exactly what replaceText wrote (symmetry).
+  assert.equal(extractText(out), "pruned body");
+});

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { extractText } from "../src/io.js";
+import { extractText, replaceText } from "../src/io.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PAYLOADS = join(HERE, "fixtures", "payloads");
@@ -43,6 +43,29 @@ test("MCP tool: text lives in an array of {type,text} blocks", () => {
   const expected = p.tool_response.map((b) => b.text).join("\n");
   assert.equal(text, expected);
   assert.ok(text.includes("diagnostics"));
+});
+
+test("extractText and replaceText round-trip every real captured payload", () => {
+  // Whatever shape a tool emits, replaceText must hand back the SAME shape with
+  // only the text swapped, and extractText must read the swap back. Asserted
+  // against the real payloads because the Read shape (file.content) is exactly
+  // where the round-trip used to break — replaceText returned a bare string that
+  // Claude Code dropped, so Read pruning silently never applied.
+  const files = readdirSync(PAYLOADS).filter((f) => f.endsWith(".json"));
+  for (const f of files) {
+    const p = load(f);
+    const swapped = replaceText(p.tool_response, "REPLACED");
+    assert.equal(extractText(swapped), "REPLACED", `${f}: round-trip must survive`);
+    // The container type must be preserved (object stays object, array stays array).
+    assert.equal(
+      Array.isArray(swapped),
+      Array.isArray(p.tool_response),
+      `${f}: array-ness must be preserved`,
+    );
+    if (!Array.isArray(p.tool_response) && typeof p.tool_response === "object") {
+      assert.equal(typeof swapped, "object", `${f}: object shape must not degrade to a string`);
+    }
+  }
 });
 
 test("every committed payload fixture yields non-empty text", () => {

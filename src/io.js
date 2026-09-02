@@ -82,6 +82,15 @@ export function replaceText(toolResponse, newText) {
   if (typeof toolResponse === "string" || toolResponse == null) return newText;
   if (Array.isArray(toolResponse)) return [{ type: "text", text: newText }];
 
+  // Read shape: text lives at file.content. This MUST round-trip as the same
+  // nested object — mirroring extractText. Returning a bare string here (the
+  // old behaviour) was silently dropped by Claude Code, so Read pruning never
+  // reached the model even though the hook ran and stashed the original. Read
+  // is the most-pruned tool, so that was the pruning path that mattered most.
+  if (toolResponse.file && typeof toolResponse.file.content === "string") {
+    return { ...toolResponse, file: { ...toolResponse.file, content: newText } };
+  }
+
   for (const key of ["content", "output", "stdout", "text", "result"]) {
     if (typeof toolResponse[key] === "string") {
       return { ...toolResponse, [key]: newText };
