@@ -1,0 +1,17 @@
+{
+  "name": "fix-isvat-es",
+  "_comment_model": "LEFT NULL ON PURPOSE — Louis pins the exact model id (or passes --model). run.js refuses to start while this is null, which is the intended guard against an unpinned model drifting mid-matrix.",
+  "model": null,
+  "_comment_repo": "Absolute path to the constructed fixture checkout (validator.js). The runner git-resets and `git clean -fdx` between trials, so this must not be your working repo.",
+  "repo": "/Users/louissalanon/bench-fixture",
+  "_comment_commit": "Fixture commit: pre-fix isVAT source (before a79ff98) with a79ff98's test file brought forward. Suite is 322 passing / 1 failing at this SHA; applying the real fix to src/lib/isVAT.js alone makes it 323/0. See BENCH_PLAN.md.",
+  "commit": "a32b22e7ba9f5e6f54799d5578017fbbdceb1208",
+  "_comment_prompt": "Names the failing test, not the buggy file (src/lib/isVAT.js) — the exploration across ~100 validator source files is the thing being measured. Forbids test edits and requires a verifying run.",
+  "prompt": "The test suite has one failing test: \"Validators > should validate VAT numbers\". Find the root cause in the source and fix it. Do not modify any test file. Run the full test suite with `npm test` and confirm every test passes before you finish.",
+  "_comment_verify": "Three clauses: (1) the suite passes, (2) no test file was modified, (3) no .skip(/.only( was introduced anywhere. Clause 3 stops an agent from going green by skipping the failing test.",
+  "verify": "npm test && git diff --exit-code -- '**/*.test.*' '**/*.spec.*' && ! git diff | grep -qE '\\.(skip|only)\\('",
+  "_comment_limits": "PLACEHOLDERS — not yet calibrated. RUNBOOK step 2 says set maxTurns to ~2x and timeoutSec to ~2x the values from one manual `claude -p` run; do that before the real pass. Suite runs in <1s so verifyTimeoutSec is generous.",
+  "maxTurns": 40,
+  "timeoutSec": 900,
+  "verifyTimeoutSec": 300
+}

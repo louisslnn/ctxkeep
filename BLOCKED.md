@@ -48,54 +48,19 @@ recommendation, and exactly what remains for you to decide or run.
 
 ---
 
-## 0.1 — Settle the name  *(needs your choice)*
+## 0.1 — Settle the name  *(resolved)*
 
-**The problem.** The project answers to two names at once:
+**Resolved.** The name is `ctxkeep`, and the sweep is done — every surface
+(package `name`/`bin`, plugin name, `skills/ctxkeep/`, `.ctxkeep.json`, the
+cache-dir default, `passthroughPaths`, the `[ctxkeep]` pointer, hook
+descriptions, and all docs and fixtures) agrees. A case-insensitive sweep for
+the old name now returns nothing. `.claude/settings.json` no longer hardcodes an
+absolute path; it uses `${CLAUDE_PROJECT_DIR}`.
 
-| Surface | Current value |
-|---|---|
-| repo directory | `ctxkeep` |
-| `package.json` `name` / `bin` | `ctxkeep` |
-| `plugin.json` `name` | `ctxkeep` |
-| skill directory | `skills/ctxkeep/` |
-| config filename | `.ctxkeep.json` |
-| cache dir default | `.ctxkeep/` |
-| docs (README, TESTING, CLAUDE, CONTEXT) | `ctxkeep` |
-
-`ctxkeep` appears **97 times across 17 files**; the rejected alternative name
-appears only in `TASKS.md`, `LAUNCH.md`, and as the absolute path inside
-`.claude/settings.json`.
-
-**npm availability (checked against the live registry on 2026-08-31):**
-
-| Candidate | npm status |
-|---|---|
-| `ctxkeep` | **FREE** |
-| `context-keep` | **FREE** |
-| `ctxkeep-cli` | **FREE** |
-| `ctx-keep` | **FREE** |
-
-All are available, so npm does not force the decision. Verify any final pick
-yourself with `npm view <name> version` (empty output = free).
-
-**Recommendation: `ctxkeep`.** It already accounts for 97 of the 98 name
-references, so choosing it makes 0.1 almost a no-op (only the repo directory and
-the stray old-name mentions change). It is descriptive of what the tool
-does, and it is free on npm; the rejected alternative oversells (it does
-head/tail elision, not compression) and would have forced renaming all 17 files.
-
-**What I need from you:** pick the name. I did **not** rename anything, per your
-instruction that this choice is yours.
-
-**Scope once you decide** (so the rename is a single sweep): repo directory,
-`package.json` `name` + `bin`, `plugin.json` `name`, `skills/<name>/` dir,
-`.<name>.json` config filename **and** its references in `src/config.js`
-(`cacheDir`, `.ctxkeep.json` load path), the `.<name>/` cache-dir default,
-`passthroughPaths`, the `[ctxkeep]` pointer string in `src/prune/index.js`, hook
-description strings in `hooks/hooks.json`, and all doc mentions.
-
-**Done-when (from TASKS.md):** `grep -ril ctxkeep . --exclude-dir=.git`
-returns only `ctxkeep`, with no stray earlier name left in the tree.
+The one surface left is the **repo directory / GitHub repo rename**, which is a
+git action for you. It also governs the `origin` URL referenced in 0.3 below and
+the doc/marketplace slugs, which now read `ctxkeep` in anticipation of that
+rename (GitHub redirects the old name once renamed).
 
 ---
 
@@ -145,56 +110,20 @@ cached views.
 
 ---
 
-## 0.5 — Two false install claims in the README  *(needs your call on install strategy)*
+## 0.5 — Two false install claims in the README  *(resolved)*
 
-The README documents two install paths that do not work today:
+**Resolved** by taking Option C: the README install section is now
+source-install only. The unpublished `npm install -g ctxkeep` line and the
+placeholder `/plugin install ctxkeep@your-marketplace` line are gone, with no
+"coming soon" hedging. Every command in the new section was executed and
+verified this session (`npm install -g .` from the checkout, then `ctxkeep init`
+and `ctxkeep doctor` in a throwaway project). The related savings-number honesty
+fix landed alongside it — see the README eval-table disclaimer and
+ARCHITECTURE.md §8.
 
-1. `npm install -g ctxkeep` — the package is **not published** (npm confirms the
-   name is free, i.e. nothing is there).
-2. `/plugin install ctxkeep@your-marketplace` — `your-marketplace` is a literal
-   placeholder; no marketplace exists.
-
-Per your instruction I did **not** run `npm publish`, did **not** create a
-marketplace repo, and left the README untouched. Here is what each option costs
-so you can choose.
-
-**Option A — Publish to npm** (makes claim 1 true)
-- Settle the package name first (blocked task 0.1); publishing bakes it in.
-- `npm login` with an npmjs account (enable 2FA / a granular automation token).
-- Add a `repository` field to `package.json` (currently missing) and a
-  `prepublishOnly: "npm test && npm run eval"` guard so a broken build can't ship.
-- `npm publish --access public` (name is unscoped, so public is the only option).
-- Verify from a clean machine: `npm install -g <name> && <name> doctor`.
-- Ongoing cost: every release is `npm version <patch|minor> && npm publish`.
-
-**Option B — Set up a Claude Code plugin marketplace** (makes claim 2 true)
-- A marketplace is a git repo containing a `.claude-plugin/marketplace.json`
-  manifest that lists plugins and where their source lives. This repo can be its
-  own marketplace (it already has a valid `.claude-plugin/plugin.json` after 0.2).
-- Add `.claude-plugin/marketplace.json` naming the marketplace and pointing an
-  entry at this plugin, then users run
-  `/plugin marketplace add louisslnn/ctxkeep` followed by
-  `/plugin install <name>@<marketplace-name>`.
-- Replace the README's `your-marketplace` with the real marketplace name.
-- Confirm the exact `marketplace.json` schema against current Claude Code plugin
-  docs before publishing it — I did not want to guess the schema into a committed
-  file.
-
-**Option C — Neither: tell the truth from source** (zero infra, satisfies the
-task's "…or removed" clause)
-- Replace claim 1 with install-from-source:
-  `git clone https://github.com/louisslnn/ctxkeep && cd ctxkeep && npm install -g .`
-  (or `npm link`), then `<name> init` / `<name> doctor`.
-- Remove the `/plugin install …@your-marketplace` line (or point it at a local
-  path once a marketplace exists).
-
-**Recommendation: Option C now, revisit A+B after Phase 2.4.** The project's own
-TASKS.md calls the Phase 2.4 benchmark "the task that decides whether the project
-is useful or just plausible." Publishing to npm and standing up a marketplace
-before that number exists advertises reach the tool hasn't earned. Fix the README
-honestly from source today; publish once the benchmark justifies it. If you'd
-rather ship now, do A and B together so both README claims become true at once.
-
-**What I need from you:** pick A, B, or C (I can then execute the README edits
-and, for A/B, prep the manifests — but I will not run `npm publish` or push a
-marketplace without you).
+Publishing to npm (old Option A) and standing up a plugin marketplace (old
+Option B) remain **optional future work**, not blockers — revisit them after the
+Phase 2.4 benchmark produces a number worth advertising. Both still need a
+`repository` field in `package.json` and, for a marketplace, a
+`.claude-plugin/marketplace.json` whose schema you confirm against current
+Claude Code docs before committing it.

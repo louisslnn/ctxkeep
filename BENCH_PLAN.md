@@ -1,136 +1,126 @@
 # BENCH_PLAN.md — preparation for TASKS.md 2.4 (benchmark)
 
-Status: **BLOCKED on missing bench spec.** Preparation that does not require
-inventing that spec is below. No quota was spent; `bench/run.js` was not run
-(it does not exist).
+Status: **Fixture constructed and validated. Ready for the shake-out pass.**
+`bench/RUNBOOK.md`, `bench/run.js`, `bench/report.js` and `bench/tasks/example.json`
+are now in place, so the earlier blocker is resolved. `bench/run.js` was **not**
+run — no matrix quota was spent. What remains before a real pass is model
+selection (Louis) and the RUNBOOK step-2 turn/timeout calibration.
 
 ---
 
-## 1. The blocker
+## 1. Candidate fixture repos (RUNBOOK step 1 criteria)
 
-Task 2.4 step 1 is "Read `bench/RUNBOOK.md` end to end." It is not there. The
-entire `bench/` tree is:
+The RUNBOOK requires all four of: a fast, deterministic test suite (<~60s, no
+network, no flakes); enough size (>~5k LOC) that finding a bug means exploring
+several files; an offline-capable install after the first fetch; and a history
+of real bug-fix commits that touched both source and a test.
 
-```
-bench/
-  tasks/        (empty)
-```
+### A — `validatorjs/validator.js` (MIT) — **chosen, constructed below**
+- **Size / exploration:** 6,158 LOC across ~100 isolated `src/lib/isX.js`
+  validator modules. The buggy file is one of a hundred, so a prompt that names
+  only the failing *test* forces genuine exploration — the strongest `Read` +
+  `Grep`/`Glob` surface of the three.
+- **Suite:** mocha, 323 tests, ~185ms, fully deterministic across repeated runs,
+  no network.
+- **History:** a steady stream of localized `fix(isX): …` commits, each touching
+  one `src/lib` file plus `test/validators.test.js` — ideal SWE-bench-style
+  material.
+- **Wrinkle (documented, not blocking):** no committed lockfile, and an old
+  `rollup@0.47` peer-dep conflict in the *browser-build* tooling. `npm ci` can't
+  run (no lock) and plain `npm install` hits ERESOLVE; install with
+  `npm install --legacy-peer-deps`. The test path (mocha / @babel/register /
+  chai) is unaffected, and the tree is deterministic once installed.
 
-Missing, and required before the rest of 2.4 can be done honestly:
-
-| Missing file | 2.4 step it gates |
-|---|---|
-| `bench/RUNBOOK.md` | step 1 (read it); step 2 ("its step 1 criteria" for candidate repos) |
-| `bench/run.js` | the harness I'm told **not** to run — but also the thing that defines a run |
-| an example `bench/tasks/*.json` | step 4 (draft a task file "filled in except the model") |
-
-Without the RUNBOOK I do not have the repo-selection criteria. Without `run.js`
-or an example task file I do not have the task-JSON schema. Drafting either from
-imagination would be fabricating the spec — the exact failure this recovery run
-was opened to correct (the earlier self-authored `ARCHITECTURE.md`). So I am not
-inventing a RUNBOOK, a `run.js`, or a task-file schema. The rest of this file is
-the preparation that stands on its own.
-
----
-
-## 2. Inferred criteria (provisional — reconcile against the real RUNBOOK)
-
-These are read off `ARCHITECTURE.md` §5/§9 and `TASKS.md` 2.4/3.4, **not** off
-the missing RUNBOOK. Treat them as my working assumptions, to be replaced by the
-RUNBOOK's actual step-1 criteria when it lands.
-
-1. **Single-session task.** The bench isolates prune + dedupe. A single-session
-   task rarely triggers compaction (TASKS.md 3.4 says memory is *not* covered
-   until a compaction-spanning task exists), so memory is out of scope here.
-2. **Large tool-output surface.** Pruning targets the biggest thing in the
-   window (ARCHITECTURE §5). A good fixture makes the agent read large files,
-   grep broadly, and run a verbose test suite — otherwise there is nothing to
-   prune and the arms converge.
-3. **Dedupe surface.** Many files the agent will re-read across the task (so the
-   PreToolUse dedupe arm has something to deny).
-4. **Deterministic, objective success.** A specific test that fails before and
-   passes after the fix — hence 2.4's "verify the test actually fails." Success
-   must be machine-checkable, not judged.
-5. **JS/TS.** The eval fixtures are JS/TS-tuned and "fidelity numbers don't
-   transfer across languages" (ARCHITECTURE §9.3, CONTEXT.md). Cross-language
-   pruning was only just validated in 2.3; the first honest bench number should
-   be on the stack the pruner is actually tuned for.
-6. **Self-contained, permissive, pinned.** MIT/BSD/Apache, installs cleanly, and
-   pinned to a fixture SHA (2.4 requires reporting the fixture SHA).
-7. **Cheap enough to run the matrix.** Small enough that N repetitions × arms ×
-   model stays within a sane quota; large enough to satisfy (2).
-
----
-
-## 3. Three candidate fixture repos
-
-Each is proposed against §2, with the tradeoff named. Final selection and exact
-SHAs must be re-checked against the real RUNBOOK criteria; SHAs are intentionally
-not pinned here because the selection rule is what's missing.
-
-### Candidate A — `colinhacks/zod` (TypeScript, MIT) — **top pick**
-- **For:** large TS source and a very large test suite → verbose test runs
-  (bulky `Bash` output) and big file reads (bulky `Read`). Best pruning surface
-  of the three. Deterministic vitest pass/fail. Widely used, so a seeded-bug
-  task is realistic.
-- **Against:** the test suite is big, so each arm's wall-clock and token cost is
-  the highest here — the (2) vs (7) tension. Mitigate by scoping the task to one
-  test file the agent must get green, not the whole suite.
-
-### Candidate B — `date-fns/date-fns` (JS/TS, MIT)
+### B — `date-fns/date-fns` (MIT)
 - **For:** hundreds of small single-purpose modules → strong **dedupe** surface
-  (the agent re-reads neighbours while fixing one function) and many `Grep`/
-  `Glob` hits. Deterministic jest tests. Easy to seed a one-function bug with a
-  single failing test.
+  (the agent re-reads neighbouring helpers while fixing one function) and many
+  `Grep`/`Glob` hits; deterministic jest tests; a one-function bug with a single
+  failing test is easy to lift from history.
 - **Against:** individual files are small, so `Read` pruning bites less than in
-  zod. Better for exercising dedupe than prune.
+  validator.js; heavier install. Best held as a dedicated **dedupe** fixture,
+  the second task shape.
 
-### Candidate C — `sindresorhus/p-limit` (or a similar small MIT utility)
-- **For:** tiny, fast, near-zero setup, fully deterministic — a cheap **control**
-  fixture to validate the harness end-to-end before spending on A/B.
-- **Against:** almost no pruning surface (little output to shorten). Useful as a
-  smoke test / lower bound, not as the headline number.
+### C — `micromatch/picomatch` (MIT)
+- **For:** glob parse/match logic spread across a few files → real exploration
+  with a different code shape (parser state, not flat validators); deterministic
+  mocha suite, fast, no network; clean fix-commit history touching src + test.
+- **Against:** smaller than validator.js, so the (2) "several files" bar is only
+  just met; a good **control / second-shape** fixture rather than the headline.
 
-**Recommended:** construct on **A (zod)** for the headline number, keep **C** as
-the harness smoke test, hold **B** as the dedicated dedupe fixture.
-
----
-
-## 4. Top candidate — construction status
-
-The task asks me to construct the top-candidate fixture "through to *verify the
-test actually fails*" and to draft `bench/tasks/<name>.json`. Both are blocked,
-and here is exactly where:
-
-- **Verify-it-fails** is doable *independently* of the RUNBOOK — clone zod at a
-  pinned SHA, revert a known one-line validation fix (or seed a bug), run its
-  own test runner, and confirm the target test fails. That step does **not**
-  need `run.js`. But doing it before the RUNBOOK exists risks building a fixture
-  whose shape (size, success-metric format, arms) doesn't match what the harness
-  will require — wasted work on a guessed schema. I've therefore not cloned or
-  built anything yet; I can execute this the moment you confirm you want it, or
-  once the RUNBOOK lands. It needs a network clone + `npm install` in that repo
-  (not this one — no new deps enter `src/`/`hooks/`).
-- **Draft `bench/tasks/<name>.json`** is **not** doable without the schema. There
-  is no `run.js` and no example task file to read the shape from. A JSON I made
-  up would be a fabricated spec. Deferred until the schema exists.
-
-What a task file will need to carry, regardless of exact schema (from 2.4's
-own wording — median, CI, success rate per arm, model, fixture SHA): the repo +
-pinned SHA, the setup/install command, the agent prompt, the objective success
-check (the command whose exit code decides pass/fail), the arms to compare
-(baseline / prune / dedupe / both), repetition count, and a `model` field —
-which per your instruction I would leave for you to fill.
+**Recommendation:** headline number on **A (validator.js)**; add **B** later as
+the dedupe-focused shape and **C** as a lower-variance control. The RUNBOOK's
+step 5 says to run three or four task shapes before generalising — A/B/C are
+that set.
 
 ---
 
-## 5. What I need to unblock 2.4
+## 2. Top candidate — construction (done)
 
-1. `bench/RUNBOOK.md` (the step-1 repo-selection criteria and the run protocol).
-2. `bench/run.js`, or any one example `bench/tasks/*.json`, to fix the task
-   schema.
-3. A yes/no on whether to go ahead and clone + seed + verify-it-fails on zod
-   **now**, blind to the RUNBOOK, or wait for it.
+Built per RUNBOOK step 1, "Constructing the task state".
 
-Until then: 2.4 is not started beyond this plan, by design. `bench/run.js` was
-not run; no quota was spent.
+- **Repo:** `validatorjs/validator.js`, cloned to `/Users/louissalanon/bench-fixture`.
+- **Install:** `npm install --legacy-peer-deps` (see wrinkle above).
+- **Fix commit chosen:** `a79ff98` — `fix(isVAT): accept Spanish digit controls`.
+  It changes `src/lib/isVAT.js` (2 lines, the `ES` locale regex) plus the test,
+  and its added cases extend a **single** `it('should validate VAT numbers')`
+  block, so the pre-fix state yields exactly one failing test.
+- **Fixture commit (the `commit` value):**
+  `a32b22e7ba9f5e6f54799d5578017fbbdceb1208`
+  — `git checkout -b bench-fixture a79ff98^` (pre-fix whole tree), then
+  `git checkout a79ff98 -- test/validators.test.js` (fix's test brought
+  forward), committed.
+
+### Validation (RUNBOOK step 1, "Validate before going further")
+
+- **Exactly one test fails**, for the intended reason:
+  `Validators > should validate VAT numbers` —
+  `validator.isVAT("ESA28015865", "ES") failed but should have passed`.
+  Suite: **322 passing / 1 failing**.
+- **The fix is in source, not the test.** Applying `a79ff98`'s `src/lib/isVAT.js`
+  alone (test file untouched) turns the suite **323 passing / 0 failing**.
+  Restoring the pre-fix source returns it to 322/1. Reconfirmed across repeated
+  runs — deterministic.
+- Root cause is a source-level regex in the large multi-locale `isVAT.js`; the
+  prompt names only the test, so locating it is real work.
+
+### Candidates rejected during construction (kept for the record)
+
+- `7d42ed2 fix(isByteLength)` — its test diff adds **three** new `it()` blocks,
+  more than one of which fails pre-fix. Multiple failures → violates
+  "exactly one test fails."
+- `3d2f4b3 fix(isISO8601)` — a clean, attractive regex bug (accepts week-zero
+  `W00`), but the new invalid cases land in a **shared** `invalid` array consumed
+  by two `it()` blocks (normal + `strict=true` regression), so **two** tests
+  fail. Same single root cause, but still fails the one-test rule. Would be the
+  next pick if a single-`it` variant is wanted.
+
+---
+
+## 3. Task spec
+
+Drafted at **`bench/tasks/fix-isvat-es.json`**, filled in except `model`:
+
+- `model` is `null` on purpose — Louis pins the exact id (or passes `--model`).
+  `run.js` refuses to start while it is null, which is the intended guard.
+- `repo` / `commit` point at the fixture above.
+- `prompt` names the failing test, **not** `src/lib/isVAT.js`, and forbids test
+  edits.
+- `verify` is the RUNBOOK's three-clause check adapted to this repo's runner:
+  `npm test && git diff --exit-code -- '**/*.test.*' '**/*.spec.*' && ! git diff | grep -qE '\.(skip|only)\('`
+  (suite passes; no test file touched; no `.skip(`/`.only(` introduced).
+- `maxTurns` (40) and `timeoutSec` (900) are **placeholders, not calibrated.**
+  RUNBOOK step 2 says derive them from one manual `claude -p` run (~2× observed
+  turns / duration). Do that before the real pass. The suite runs in <1s, so
+  `verifyTimeoutSec` (300) is generous.
+
+---
+
+## 4. Remaining before a number
+
+1. Pin `model` in the task file (or pass `--model`).
+2. Calibrate `maxTurns` / `timeoutSec` from one manual run (RUNBOOK step 2).
+3. Shake-out pass: `node bench/run.js --task bench/tasks/fix-isvat-es.json --model <id> --trials 3`
+   and clear the four calibration checks (RUNBOOK step 3) before the real pass.
+
+Per the task instruction, `bench/run.js` was not run and no matrix quota was
+spent. This covers **prune** and **dedupe** only, not memory (RUNBOOK scope note).
