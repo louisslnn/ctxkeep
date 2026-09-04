@@ -15,23 +15,25 @@ text on disk, and the bundled skill teaches Claude when to follow it.
 
 ## Install
 
-**As a plugin (recommended).** Hooks are active from session start, which is
-what you want for something that has to catch every tool call:
+ctxkeep installs from source and has no runtime dependencies. Clone the
+repository, then install the CLI from the checkout:
 
-```
-/plugin install ctxkeep@your-marketplace
+```bash
+npm install -g .
 ```
 
-**As an npm package.** Writes the same hooks into `.claude/settings.json`:
+That puts the `ctxkeep` command on your PATH. Then, inside each project you want
+ctxkeep to manage:
 
-```
-npm install -g ctxkeep
-cd your-project
+```bash
 ctxkeep init
 ctxkeep doctor
 ```
 
-Either way, restart Claude Code afterward and run `ctxkeep doctor`.
+`init` writes the hooks into `.claude/settings.json` and creates `CONTEXT.md`;
+`doctor` verifies the wiring and reports what will be injected. Restart Claude
+Code after `init` so the hooks load — `doctor`'s "hooks have fired at least
+once" check stays red until a session has run against a real large-file read.
 
 ## Verify this first
 
