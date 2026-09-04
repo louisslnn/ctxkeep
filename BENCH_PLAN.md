@@ -1,10 +1,78 @@
 # BENCH_PLAN.md — preparation for TASKS.md 2.4 (benchmark)
 
-Status: **Fixture constructed and validated. Ready for the shake-out pass.**
-`bench/RUNBOOK.md`, `bench/run.js`, `bench/report.js` and `bench/tasks/example.json`
-are now in place, so the earlier blocker is resolved. `bench/run.js` was **not**
-run — no matrix quota was spent. What remains before a real pass is model
-selection (Louis) and the RUNBOOK step-2 turn/timeout calibration.
+Status: **Fixture selection rebuilt. No fixture is matrix-ready yet.** The
+original fixture (validator.js) was calibrated and then **rejected** — a
+competent agent solves it without loading anything bulky, so there is nothing
+to prune. A second, deliberately harder fixture (prettier) was built and
+calibrated to test the reframed hypothesis; it also returned **prune count 0**,
+and that run was confounded by a construction leak. `bench/run.js` has **not**
+been run — no matrix quota spent. Details in §0 and §5.
+
+---
+
+## 0. Fixture selection, rebuilt (2026-09-04)
+
+### 0.1 Why validator.js was rejected
+
+The fix-isvat-es fixture was calibrated with one manual `claude -p` run
+(sonnet-4-6, SHA a32b22e): **12 turns / 136s / $0.235**, success. But the
+transcript showed the fixture has **nothing worth pruning**:
+
+- Total tool output across the whole task: **~11.1 KB**; largest single result
+  **5.5 KB** (a `Read` of the 140-line buggy `isVAT.js` — under the 400-line
+  Read threshold).
+- The 16,231-line `validators.test.js` was **not** bulk-read: the agent grepped
+  for the failing case's line number, then did an **offset-limited** `Read`
+  (`offset 15570, limit 40`).
+- All `npm test` runs were piped through `grep`/`tail`, so no Bash result
+  approached the 120-line threshold.
+
+**The reason matters more than the rejection:** a competent agent already
+self-limits context. It greps for a symbol and offset-reads the hit rather than
+loading whole files, so on a task whose bug is findable by grepping an obvious
+symbol, nothing bulky ever enters the window and ctxkeep has no surface to act
+on. The benchmark's real question is therefore **where an agent *fails* to
+self-limit**, and whether that region is large enough to measure.
+
+### 0.2 New candidate criteria + screening (byte size on a failing suite)
+
+Selection was rebuilt around four conditions, each candidate meeting ≥2:
+(a) cause not findable by grepping an obvious symbol → must read to build a
+mental model; (b) failing suite emits verbose output (hundreds of lines) →
+where Bash pruning would earn its keep; (c) failing test points at one module,
+cause lives in another; (d) same files re-read across many turns → the only
+condition dedupe acts under.
+
+Three candidates were cloned and their failing-suite output measured
+(`--ignore-scripts` installs, sandbox off; network reaches GitHub/npm only with
+the sandbox disabled):
+
+| Repo | Failing state | # fails | Raw bytes | Raw lines | Crosses 120-line Bash threshold? |
+|---|---|---|---|---|---|
+| validator.js *(prior)* | 1 | 1 | agent self-limited to ~30 lines | — | **No** — trivially greppable |
+| eslint | revert real fix src | 1 | 6,210 | 178 | Yes, but ~150 lines are passing `✔` spec-reporter noise; diagnostic is compact/greppable |
+| date-fns v2.30 | crude src bug | 10 | 10,567 | 319 | Inflated by 10 fails; per-failure ≈30 lines → a clean 1-fail fixture lands near/under 120 |
+| **prettier** | revert real fix src | 68 | **53,934** | **1,446** | **Yes, decisively** — ~20 lines/snapshot diff the agent must *read*, not greppable |
+
+date-fns also accrued install friction (HEAD is a monorepo-in-migration with no
+top-level `test`; v2.30's `@date-fns/date-fns-scripts` devDep is unpublished →
+`npm install` 404s; its `npm test` is a browser `karma start`). It remains only
+a possible (c)+(d) dedupe shape, not a headline candidate.
+
+**Prettier was the strongest** and was carried forward.
+
+### 0.3 Finding: criterion (b) is in tension with a clean single-cause fixture
+
+The 1,446-line prettier dump above required **68 same-cause failures** (a broad
+4-file source revert). RUNBOOK forbids that shape — it wants ~one failing test.
+When the prettier fixture is built cleanly (revert one file → the two intended
+`arrow-chain` failures), the **full** failing suite prints only **102 lines**,
+and the scoped run ~46–80. So verbose failure output only materialises under
+many failures, which a well-formed single-root-cause fixture specifically
+avoids. **This is a finding about the benchmark design, not a fixture problem:**
+the "verbose Bash output" lever cannot be exercised without violating the
+one-failure rule. A clean fixture's pruning surface, if any, has to come from
+criterion (a) — large *source* the agent is forced to read — not from (b).
 
 ---
 
@@ -124,3 +192,83 @@ Drafted at **`bench/tasks/fix-isvat-es.json`**, filled in except `model`:
 
 Per the task instruction, `bench/run.js` was not run and no matrix quota was
 spent. This covers **prune** and **dedupe** only, not memory (RUNBOOK scope note).
+
+Note: §§1–4 above are the **superseded** validator.js plan, kept for the record.
+The current fixture work is prettier (§0 and §5).
+
+---
+
+## 5. Prettier fixture — construction + calibration (2026-09-04)
+
+**Task spec:** `bench/tasks/fix-arrow-comments-prettier.json` (committed
+**provisional** — see below). Repo: prettier clone at
+`~/bench-candidates/prettier`, branch `bench-fixture`, SHA `6f8493d5`.
+
+### Construction (RUNBOOK step 1)
+
+- Fix reverted: `5a0fdd974` — *Fix unstable trailing comment on a parenthesized
+  arrow chain*. One source file, `src/language-js/comments/handle-comments.js`
+  (**1,344 lines**). Reverting only that file against HEAD's snapshot yields
+  **exactly 2 failing tests**, both the SAME input
+  `arrow-chain-with-trailing-comments.js` under `arrowParens: always` and
+  `avoid` — **one root cause, two assertions**. Confirmed: restoring only
+  `handle-comments.js` turns the js-family suite 28,794/0.
+  - Two failures, not one, is RUNBOOK-acceptable: the one-failure rule guards
+    against two *independent* bugs producing bimodal cost; here both trace to
+    the single revert.
+- **Reset survivability** (`git checkout -- . && git clean -fdx -e node_modules`)
+  tested twice: passes. `nodeLinker: node-modules` keeps deps in `node_modules`
+  (excluded from clean); only the regenerable `.yarn/install-state.gz` is
+  removed, which does not break jest.
+- **Verify is scoped, justified:** full `tests/format` = 2:30; the JS-family
+  subset (`js`+`typescript`+`flow`+`jsx`) = **46s / 28,794 tests** and covers
+  the entire blast radius of a `language-js` change while skipping the css/yaml/
+  markdown/html tests it cannot touch. `verifyTimeoutSec` = 120 (~2× 46s).
+
+### Calibration — one manual `claude -p`, sonnet-4-6, SHA 6f8493d5
+
+| Metric | Value |
+|---|---|
+| num_turns | **14** |
+| total_cost_usd | **$0.168** |
+| duration_ms | **363,965 (~6:05)** |
+| Result | success — only `handle-comments.js` changed; no test/snapshot touched; no `.skip/.only`; 28,794 js-family tests pass |
+
+Limits set to ~2×: `maxTurns 28`, `timeoutSec 730`.
+
+**Files read:** 2. (1) the test input `arrow-chain-with-trailing-comments.js`,
+whole (small). (2) `handle-comments.js` — **offset-limited: `offset 1195,
+limit 80`, i.e. 80 of 1,344 lines (~6%)**. Total tool output **12.7 KB** across
+13 results; largest single result **2,354 chars / 80 lines**.
+
+**Key question — did it bulk-read the 1,344-line file? No.** It read 6% of it,
+and it navigated there via **git archaeology**: `git log` → `git show 6f8493d5`
+→ `git show 5a0fdd974 -- handle-comments.js`, reading the exact original fix
+diff. **Prune count = 0** — no result crossed the 120-line Bash or 400-line Read
+threshold (max 80 lines).
+
+**This run is confounded — a construction bug I introduced.** The fixture commit
+message reads *"revert handle-comments.js fix from 5a0fdd974 …"*, so `git log`
+handed the agent the answer's SHA. It solved the task by reading the upstream
+fix, not by modelling the source, and the precise `offset 1195` read almost
+certainly came from the fix diff's line numbers. So this run does **not** cleanly
+answer whether prettier's source forces a bulk read.
+
+**Two lessons:**
+
+1. **Fixture-construction rule:** never name (or otherwise leak) the fix in the
+   fixture commit message — the repo's own history is in the agent's context.
+   This is the git-history analogue of "don't name the buggy file in the prompt."
+2. Even so, the pattern from validator.js repeats: **two fixtures, both prune
+   count 0.** A competent agent self-limits — by grep+offset read on validator.js,
+   by git+offset read on prettier — so bulky content never enters the window.
+
+### Do NOT run the matrix on this fixture yet
+
+Before it is valid: (a) rebuild with a **neutral** commit message (no fix SHA),
+which changes the fixture SHA in the spec; (b) re-calibrate once to see whether,
+absent the leak, the agent is actually forced to bulk-read the 1,344-line file
+(the clean test of criterion (a)). If it still offset-reads and prune stays 0,
+the reframed hypothesis is falsified twice and the measurable-pruning target has
+to be reconsidered entirely — possibly the dedupe shape (date-fns, criterion d)
+rather than single-shot prune. `bench/run.js` was not run; no matrix quota spent.

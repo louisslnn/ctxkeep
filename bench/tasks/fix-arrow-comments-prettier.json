@@ -1,0 +1,18 @@
+{
+  "name": "fix-arrow-comments-prettier",
+  "_comment_status": "PROVISIONAL — DO NOT run the matrix on this fixture yet. The one manual calibration (see BENCH_PLAN.md §5) returned prune count 0, and the run was confounded by a fixture-construction leak (the commit message below names the fix SHA, so the agent solved it via `git show 5a0fdd974` instead of reading source). Both must be resolved before this is a valid pruning fixture: (a) rebuild with a neutral commit message that does not name the fix, and (b) re-calibrate to confirm the agent is forced to bulk-read the 1,344-line handle-comments.js. Until then this file records the calibrated limits, not a green light.",
+  "_comment_model": "Pinned to the model used for calibration. run.js refuses to start on a null model.",
+  "model": "claude-sonnet-4-6",
+  "_comment_repo": "Prettier clone (yarn berry, nodeLinker: node-modules). NOT a working repo. Reset (`git checkout -- . && git clean -fdx -e node_modules`) verified to survive twice: node_modules is preserved and jest runs against it directly; only the regenerable .yarn/install-state.gz is cleaned, which does not break tests.",
+  "repo": "/Users/louissalanon/bench-candidates/prettier",
+  "_comment_commit": "Fixture: HEAD (036e72a4b) with src/language-js/comments/handle-comments.js reverted to 5a0fdd974~1. Pre-fix source vs HEAD snapshot => exactly 2 failing tests, both the SAME input `arrow-chain-with-trailing-comments.js` under two option sets (arrowParens always/avoid) => one root cause, two assertions (RUNBOOK-acceptable). Restoring only handle-comments.js turns the js-family suite 28794/0. NOTE: this SHA changes once the commit message is neutralized (see _comment_status).",
+  "commit": "6f8493d56025c78810f978f9a0a6c58dacec180a",
+  "_comment_prompt": "Names the failing tests (arrow-chain input under tests/format/js/arrows), NOT the buggy file (src/language-js/comments/handle-comments.js, 1,344 lines). Forbids test AND snapshot edits (clause 2 below), so an agent cannot go green by rewriting the expected snapshot.",
+  "prompt": "Prettier's test suite has two failing tests, both for the same input file `arrow-chain-with-trailing-comments.js` under `tests/format/js/arrows` (rendered with `arrowParens: always` and `arrowParens: avoid`): a parenthesized arrow chain with a trailing line comment is being formatted incorrectly, because a comment is attached to the wrong node. Find the root cause in the source and fix it. Do not modify any test file or snapshot file. Run the test suite with `npm test` and confirm every test passes before you finish.",
+  "_comment_verify": "Scoped to the JS-family blast radius of a language-js change (js/typescript/flow/jsx) instead of the full 2:30 suite: 46s, still 28,794 tests, catches any collateral comment-placement breakage while skipping css/yaml/markdown/html that handle-comments.js cannot touch. Clauses: (1) js-family suite passes, (2) no *.test.js or *.snap modified, (3) no .skip(/.only( introduced.",
+  "verify": "node_modules/.bin/jest tests/format/js tests/format/typescript tests/format/flow tests/format/jsx --ci && git diff --exit-code -- '**/*.test.js' '**/*.snap' && ! git diff | grep -qE '\\.(skip|only)\\('",
+  "_comment_limits": "Calibrated from one manual `claude -p` run at SHA 6f8493d5 on claude-sonnet-4-6: observed 14 turns / 364s / $0.168, success. maxTurns and timeoutSec set to ~2x observed. verifyTimeoutSec ~2x the 46s scoped verify.",
+  "maxTurns": 28,
+  "timeoutSec": 730,
+  "verifyTimeoutSec": 120
+}
