@@ -102,17 +102,28 @@ Savings alone are a meaningless metric; you can hit any compression number by
 deleting more. Each fixture declares `critical` patterns that must survive, and
 the harness reports them alongside the savings:
 
-The percentages below are the output of `npm run eval` over three synthetic
-fixtures in `eval/fixtures/`. They measure the pruner against fixed inputs, not
-real Claude Code sessions, and are **not** a real-world savings claim — your
-mileage depends entirely on what your tools actually emit.
+These numbers measure the **pruning function** — `pruneToolOutput`'s return
+value — over the synthetic fixtures in `eval/fixtures/`, not real Claude Code
+sessions. They are **not** a real-world savings claim; your mileage depends
+entirely on what your tools actually emit. And a green eval only proves the
+function elides and preserves correctly — it does **not** prove the shortened
+result is actually delivered into the context window. That end-to-end path is a
+separate concern (the `replaceText` Read drop hid behind green eval numbers once
+already) and is verified separately by `test/delivery-check.sh`. See
+ARCHITECTURE.md §8.
 
 ```
 fixture                     before   after   saved   inline  lost
-bash-short-passthrough          76      76      0%      2/2     0
-bash-test-run-failure         5.2k    1.4k     73%      4/4     0
-read-large-source            11.4k    2.3k     80%      3/3     0
-TOTAL                        16.7k    3.7k     78%      9/9     0
+-----------------------------------------------------------------
+bash-cargo-test-failure       1.8k     959     46%      4/4     0
+bash-go-test-failure          2.9k    1.0k     64%      4/4     0
+bash-pytest-failure           3.4k    1.7k     50%      4/4     0
+bash-short-passthrough          21      21      0%      2/2     0
+bash-test-run-failure         2.5k    1.3k     47%      4/4     0
+read-large-source            35.0k    2.0k     94%      3/3     0
+read-line-numbers             4.7k     744     84%      4/4     0
+-----------------------------------------------------------------
+TOTAL                        50.2k    7.8k     85%    25/25     0
 ```
 
 `lost` above zero is a bug. On its first run this harness caught one: the
