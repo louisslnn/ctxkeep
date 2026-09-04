@@ -1,0 +1,29 @@
+I have enough to conclude. Here is my complete analysis across all changed files:
+
+**`src/prune/lines.js` — marker arithmetic:**  
+Gap from `startIdx` (0-based) covering `count` lines spans 0-based indices `startIdx..startIdx+count-1`, i.e. 1-based source lines `startIdx+1..startIdx+count`. So `from = startIdx+1` and `to = startIdx+count` are both correct. The `gapStart` tracking (`if (gap === 0) gapStart = i`) is set before `gap++`, so it always captures the first index of each new gap. Cross-checked against all three test cases in `lines-elision.test.js`: arithmetic is correct for the 760-line single-gap, both gaps in the salvage case, and the singular one-line case.
+
+**`src/memory.js` — `packDigest` budget and degenerate case:**  
+`PREFIX` = "Accumulated context for this project, recorded in previous sessions:\n\n" = 69 chars. Budget = `cap − 69 − 240`. In the degenerate case, `sections[0]` is pushed whole unless it exceeds `HARD=9500`; total digest is `69 + ≤9500 + ≤240 ≈ 9809 < 10,000`, satisfying invariant 5. `dropped = sections.length − kept.length` is computed after the degenerate push, so it correctly counts how many non-first sections were omitted.
+
+**`src/store.js` — `readState` / `appendState`:**  
+The initial `state = { reads: {}, turns: 0 }` has no `startedAt`. `readState` populates it only from log replay (`if ("startedAt" in ev) state.startedAt = ev.startedAt`). `pre-compact.js` uses `state.startedAt ?? 0`, which falls back to epoch if session-start never ran—allowing compaction rather than blocking it, which is the safe direction. All error paths in `appendState`, `sweepCache`, and `readState` swallow and exit 0 (invariant 4). 
+
+**`src/io.js` — `extractText`:**  
+The explicit `file.content` check yields the same result as the old recursive-fallback through `"file"` → `extractText(file)` → `"content"` key. `replaceText` is unchanged and still doesn't handle the Read nested shape—but this was pre-existing, is untouched by the diff, and doesn't break any invariant (the model still receives the pruned text; filePath is carried via `tool_input`, not `tool_response`).
+
+**Tests:**  
+- `lines-elision.test.js` test 1: `assert.match(…/original lines 101-860/)` fails on old marker format. ✓  
+- `memory-truncation.test.js`: old raw-char slice injects "## Gamma" without "GAMMA_END"; test catches this. ✓  
+- `store-concurrency.test.js`: old read-modify-write races; 20 parallel processes would intermittently clobber. ✓  
+- `cache-gc.test.js` / `pre-compact.test.js`: both exercise behaviors absent from old code. ✓  
+- `payloads.test.js`: tests against captured real payloads; results are deterministic. ✓
+
+No invariant violations, no wrong-behaviour paths, no unfailable assertions found.
+
+
+{
+  "verdict": "pass",
+  "findings": [],
+  "summary": "All arithmetic is correct, every changed code path upholds the project invariants, and each new test targets a behavior that would fail on the pre-fix code. No defects found."
+}
