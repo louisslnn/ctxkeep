@@ -1,7 +1,7 @@
 {
   "session_id": "659aabb8-5c28-4ead-bf60-bd35584d7af6",
-  "transcript_path": "/Users/louissalanon/.claude/projects/-Users-louissalanon-Desktop-HyperCompressor/659aabb8-5c28-4ead-bf60-bd35584d7af6.jsonl",
-  "cwd": "/Users/louissalanon/Desktop/HyperCompressor",
+  "transcript_path": "/Users/louissalanon/.claude/projects/-Users-louissalanon-Desktop-ctxkeep/659aabb8-5c28-4ead-bf60-bd35584d7af6.jsonl",
+  "cwd": "/Users/louissalanon/Desktop/ctxkeep",
   "permission_mode": "auto",
   "effort": {
     "level": "high"
@@ -12,7 +12,7 @@
   "tool_response": [
     {
       "type": "text",
-      "text": "[\n  {\n    \"uri\": \"file:///Users/louissalanon/Desktop/HyperCompressor/LAUNCH.md\",\n    \"linesInFile\": 140,\n    \"diagnostics\": []\n  },\n  {\n    \"uri\": \"file:///Users/louissalanon/Desktop/HyperCompressor/TESTING.md\",\n    \"diagnostics\": []\n  },\n  {\n    \"uri\": \"file:///Users/louissalanon/Desktop/HyperCompressor/TASKS.md\",\n    \"diagnostics\": []\n  },\n  {\n    \"uri\": \"file:///Users/louissalanon/Desktop/HyperCompressor/CLAUDE.md\",\n    \"diagnostics\": []\n  }\n]"
+      "text": "[\n  {\n    \"uri\": \"file:///Users/louissalanon/Desktop/ctxkeep/LAUNCH.md\",\n    \"linesInFile\": 140,\n    \"diagnostics\": []\n  },\n  {\n    \"uri\": \"file:///Users/louissalanon/Desktop/ctxkeep/TESTING.md\",\n    \"diagnostics\": []\n  },\n  {\n    \"uri\": \"file:///Users/louissalanon/Desktop/ctxkeep/TASKS.md\",\n    \"diagnostics\": []\n  },\n  {\n    \"uri\": \"file:///Users/louissalanon/Desktop/ctxkeep/CLAUDE.md\",\n    \"diagnostics\": []\n  }\n]"
     }
   ],
   "tool_use_id": "toolu_018KJLEhkHNRyTDyqcXWhufZ",

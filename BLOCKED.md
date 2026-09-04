@@ -54,7 +54,7 @@ recommendation, and exactly what remains for you to decide or run.
 
 | Surface | Current value |
 |---|---|
-| repo directory | `HyperCompressor` |
+| repo directory | `ctxkeep` |
 | `package.json` `name` / `bin` | `ctxkeep` |
 | `plugin.json` `name` | `ctxkeep` |
 | skill directory | `skills/ctxkeep/` |
@@ -62,15 +62,15 @@ recommendation, and exactly what remains for you to decide or run.
 | cache dir default | `.ctxkeep/` |
 | docs (README, TESTING, CLAUDE, CONTEXT) | `ctxkeep` |
 
-`ctxkeep` appears **97 times across 17 files**; `hypercompressor` appears only in
-`TASKS.md`, `LAUNCH.md`, and as the absolute path inside `.claude/settings.json`.
+`ctxkeep` appears **97 times across 17 files**; the rejected alternative name
+appears only in `TASKS.md`, `LAUNCH.md`, and as the absolute path inside
+`.claude/settings.json`.
 
 **npm availability (checked against the live registry on 2026-08-31):**
 
 | Candidate | npm status |
 |---|---|
 | `ctxkeep` | **FREE** |
-| `hypercompressor` | **FREE** |
 | `context-keep` | **FREE** |
 | `ctxkeep-cli` | **FREE** |
 | `ctx-keep` | **FREE** |
@@ -80,9 +80,9 @@ yourself with `npm view <name> version` (empty output = free).
 
 **Recommendation: `ctxkeep`.** It already accounts for 97 of the 98 name
 references, so choosing it makes 0.1 almost a no-op (only the repo directory and
-the stray `hypercompressor` mentions change). It is descriptive of what the tool
-does, and it is free on npm. `hypercompressor` oversells (it does head/tail
-elision, not compression) and would force renaming all 17 files.
+the stray old-name mentions change). It is descriptive of what the tool
+does, and it is free on npm; the rejected alternative oversells (it does
+head/tail elision, not compression) and would have forced renaming all 17 files.
 
 **What I need from you:** pick the name. I did **not** rename anything, per your
 instruction that this choice is yours.
@@ -94,9 +94,8 @@ instruction that this choice is yours.
 `passthroughPaths`, the `[ctxkeep]` pointer string in `src/prune/index.js`, hook
 description strings in `hooks/hooks.json`, and all doc mentions.
 
-**Done-when (from TASKS.md):** `grep -ril "ctxkeep\|hypercompressor" . --exclude-dir=.git`
-returns only the chosen name. Currently returns both — will stay unsatisfied
-until you choose and the sweep runs.
+**Done-when (from TASKS.md):** `grep -ril ctxkeep . --exclude-dir=.git`
+returns only `ctxkeep`, with no stray earlier name left in the tree.
 
 ---
 
@@ -108,7 +107,7 @@ and `kickbacks-v2.vsix` are `git rm`'d and `*.vsix` is gitignored.
 **Still blocked.** The files remain in history commit `14edbd7` ("First tests"),
 so the task's `git log --all --name-only | grep -c vsix` still returns `2`, not
 `0`. Reaching `0` requires rewriting history, which per your instruction I did
-**not** do. A remote exists (`origin` → github.com/louisslnn/HyperCompressor.git),
+**not** do. A remote exists (`origin` → github.com/louisslnn/ctxkeep.git),
 so the rewrite also needs a force-push.
 
 Run one of these yourself once you've confirmed no one else has pulled the repo.
@@ -132,7 +131,7 @@ git push --force-with-lease origin main
 ```bash
 brew install git-filter-repo            # or: pipx install git-filter-repo
 git filter-repo --path kickbacks-inspect --path kickbacks-v2.vsix --invert-paths
-git remote add origin https://github.com/louisslnn/HyperCompressor.git  # filter-repo drops the remote
+git remote add origin https://github.com/louisslnn/ctxkeep.git  # filter-repo drops the remote
 git push --force-with-lease origin --all
 ```
 
@@ -174,7 +173,7 @@ so you can choose.
   own marketplace (it already has a valid `.claude-plugin/plugin.json` after 0.2).
 - Add `.claude-plugin/marketplace.json` naming the marketplace and pointing an
   entry at this plugin, then users run
-  `/plugin marketplace add louisslnn/HyperCompressor` followed by
+  `/plugin marketplace add louisslnn/ctxkeep` followed by
   `/plugin install <name>@<marketplace-name>`.
 - Replace the README's `your-marketplace` with the real marketplace name.
 - Confirm the exact `marketplace.json` schema against current Claude Code plugin
@@ -184,7 +183,7 @@ so you can choose.
 **Option C — Neither: tell the truth from source** (zero infra, satisfies the
 task's "…or removed" clause)
 - Replace claim 1 with install-from-source:
-  `git clone https://github.com/louisslnn/HyperCompressor && cd HyperCompressor && npm install -g .`
+  `git clone https://github.com/louisslnn/ctxkeep && cd ctxkeep && npm install -g .`
   (or `npm link`), then `<name> init` / `<name> doctor`.
 - Remove the `/plugin install …@your-marketplace` line (or point it at a local
   path once a marketplace exists).

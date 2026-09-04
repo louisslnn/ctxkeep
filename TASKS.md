@@ -15,16 +15,13 @@ to the next. Do not batch multiple tasks into one commit.
 
 ### 0.1 — Settle the name
 
-The repo is `HyperCompressor`, `package.json` says `ctxkeep`, the README says
-`ctxkeep`, the skill directory is `skills/ctxkeep/`, and the config file is
-`.ctxkeep.json`. Pick one name and make everything agree: repo, package name,
-bin name, skill directory, config filename, plugin name, and every mention in
-docs.
+The name is `ctxkeep`, and every surface agrees: `package.json` `name`/`bin`,
+the plugin name, the skill directory `skills/ctxkeep/`, the config file
+`.ctxkeep.json`, and every mention in docs. The repo directory rename is the one
+remaining surface, and it is a git/GitHub action left to Louis.
 
-Check npm availability before committing to a package name.
-
-**Done when:** `grep -ril "ctxkeep\|hypercompressor" . --exclude-dir=.git`
-returns only the chosen name.
+**Done when:** `grep -ril ctxkeep . --exclude-dir=.git` returns only `ctxkeep`,
+with no stray earlier name anywhere in the tree.
 
 ### 0.2 — Fix the plugin manifest path
 

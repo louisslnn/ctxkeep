@@ -6,7 +6,7 @@
 aren't there yet:
 
 ```bash
-cd ~/HyperCompressor
+cd ~/ctxkeep
 cp /path/to/CLAUDE.md /path/to/TASKS.md /path/to/ARCHITECTURE.md .
 cp -r /path/to/bench .
 git add -A && git commit -m "docs: add architecture, backlog, and benchmark harness"
