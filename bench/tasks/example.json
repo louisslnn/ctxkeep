@@ -1,0 +1,17 @@
+{
+  "name": "fix-failing-test",
+  "_comment_model": "Exact model id, pinned. The runner refuses to start without one \u2014 an unpinned model can change mid-matrix and invalidate every comparison.",
+  "model": "claude-sonnet-4-6",
+  "_comment_repo": "Absolute path to a checkout you control. Not your working repo \u2014 the runner does `git clean -fdx` between trials.",
+  "repo": "/abs/path/to/bench-fixture-repo",
+  "_comment_commit": "SHA of your constructed fixture commit (see bench/RUNBOOK.md step 1). Every trial resets here.",
+  "commit": "a1b2c3d4",
+  "_comment_prompt": "Must NOT name the buggy file \u2014 the exploration is what you are measuring. Name the failing test instead.",
+  "prompt": "The test suite has one failing test in src/auth/session.test.ts. Find the root cause in the source (not the test) and fix it. Do not modify any test file. Run the suite to confirm before you finish.",
+  "_comment_verify": "Three clauses: suite passes, no test file touched, no .skip/.only introduced. Without the third, an agent can go green by skipping the test.",
+  "verify": "npm test -- --run && git diff --exit-code -- '**/*.test.*' '**/*.spec.*' && ! git diff | grep -qE '\\.(skip|only)\\('",
+  "_comment_limits": "Calibrate from one manual run: ~2x observed turns, ~2x observed duration.",
+  "maxTurns": 40,
+  "timeoutSec": 900,
+  "verifyTimeoutSec": 300
+}
