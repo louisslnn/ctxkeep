@@ -27,7 +27,13 @@ guard(async () => {
   appendState(config, input.session_id, { startedAt: Date.now() });
 
   // Garbage-collect aged artifacts here, off the hot path. Never in PostToolUse.
-  sweepCache(config);
+  // Only on a fresh `startup`: `resume`, `compact` and `fork` all continue a
+  // conversation that already holds pruned results whose [ctxkeep] pointers
+  // reference these files. Sweeping an aged one on resume would delete the
+  // target of a live pointer and make the elided middle unrecoverable — an
+  // invariant-2 (reversible pruning) violation. A fresh startup has no such
+  // pointers in context, so it is the only safe moment to sweep.
+  if (input.source === "startup") sweepCache(config);
 
   const digest = buildDigest(config);
   if (!digest) return;
