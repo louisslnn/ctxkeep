@@ -363,6 +363,22 @@ pruned after). **Fixed in `14667e4`:** `replaceText` round-trips the Read shape,
 mirroring `extractText`. Caveat: the internal `metrics.jsonl` savings for Read
 before this commit counted bytes that never reached context.
 
+> **What this bug means for the test strategy.** A total failure of the primary
+> code path — Read, the most-pruned tool — survived 36 unit tests and 7 eval
+> fixtures. It survived because *every one of those is a function-level test*:
+> they call `pruneToolOutput`/`replaceText` or spawn a hook and assert the JSON
+> it **emits**. Not one observed what Claude Code **delivers** to the model after
+> applying `updatedToolOutput`. That gap is structural, not an oversight: whether
+> a hook's emitted shape is accepted is behaviour of the live harness, which a
+> hermetic, deterministic, network-free suite (the thing CI must be) cannot
+> reproduce. So a class of bug — the hook emits a shape Claude Code silently
+> drops — is *invisible* to `npm test` by construction, and fail-open guarantees
+> it surfaces as zero savings, never an error. The mitigation is an explicit
+> out-of-band delivery check (`test/delivery-check.sh`, run against a live
+> `claude`) plus the manual procedure in `CONTRIBUTING.md`. A future change to
+> what any hook emits must be verified there, not only in `test/`. Treat a green
+> `npm test` as "the function is correct", never as "the model received it".
+
 **Pruning is positional, not structural.** Head/tail is a crude proxy for
 importance. A structure-aware version — keep signatures and exports, drop
 bodies — would almost certainly do better on source files. That's the most
