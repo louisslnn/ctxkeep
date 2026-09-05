@@ -10,7 +10,16 @@ export const DEFAULTS = {
 
   prune: {
     // File reads: keep the top and bottom, elide the middle.
-    Read: { maxLines: 400, headLines: 100, tailLines: 40 },
+    // Threshold lowered 400 → 200 (BENCH_PLAN §6b, corroborated by
+    // bench/analyze-payloads over 699 real tool_results): whole-file reads
+    // cluster at ~150–400 lines, so 400 sat at the top of the distribution and
+    // caught almost nothing (3.6% of Reads, one freak snapshot). 200 catches
+    // the real cluster (13% of Reads, ~20% of tool bytes) while staying above
+    // the 140-line head+tail floor, below which a prune saves nothing. Going to
+    // 150 nearly doubles the prune count for ~1.5pt more bytes — mostly tiny,
+    // low-value elisions the model may then re-fetch. Watch `ctxkeep stats`
+    // re-fetch rate (the fidelity cost) before lowering further.
+    Read: { maxLines: 200, headLines: 100, tailLines: 40 },
 
     // Command output: keep head and tail, but always preserve lines that
     // look like errors — those are the reason the command was run.
