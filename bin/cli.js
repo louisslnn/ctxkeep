@@ -67,19 +67,38 @@ function stats() {
   const prunes = metrics.filter((m) => m.kind === "prune");
   const dedupes = metrics.filter((m) => m.kind === "dedupe");
   const compacts = metrics.filter((m) => m.kind === "compact");
+  const refetches = metrics.filter((m) => m.kind === "refetch");
 
   const savedByPrune = prunes.reduce((n, m) => n + (m.saved || 0), 0);
   const savedByDedupe = dedupes.reduce((n, m) => n + (m.saved || 0), 0);
   const before = prunes.reduce((n, m) => n + (m.before || 0), 0);
+
+  // Fidelity cost: when the model re-reads a pruned artifact it pulls the full
+  // text back in, spending the tokens the prune saved (and then some). Net
+  // saving is the gross prune saving minus everything re-fetched. Count a prune
+  // as "re-expanded" only when a refetch's `of` matches its id, so repeat reads
+  // of the same artifact don't inflate the rate beyond the prunes that exist.
+  const refetchTokens = refetches.reduce((n, m) => n + (m.tokens || 0), 0);
+  const prunedIds = new Set(prunes.map((m) => m.id).filter(Boolean));
+  const reExpanded = new Set(
+    refetches.map((m) => m.of).filter((id) => prunedIds.has(id)),
+  ).size;
+  const netPrune = savedByPrune - refetchTokens;
 
   console.log(`ctxkeep — ${new Set(metrics.map((m) => m.session)).size} session(s)\n`);
   console.log(`  pruned      ${prunes.length} results, saved ~${formatTokens(savedByPrune)} tokens`);
   if (before) {
     console.log(`              (${Math.round((savedByPrune / before) * 100)}% of pruned artifacts)`);
   }
+  console.log(`  re-fetched  ${refetches.length} expansions, cost ~${formatTokens(refetchTokens)} tokens`);
+  if (prunedIds.size) {
+    console.log(`              (${reExpanded}/${prunedIds.size} prunes re-expanded, ` +
+      `${Math.round((100 * reExpanded) / prunedIds.size)}%)`);
+  }
   console.log(`  deduped     ${dedupes.length} reads, saved ~${formatTokens(savedByDedupe)} tokens`);
   console.log(`  compactions ${compacts.length} snapshotted`);
-  console.log(`\n  total       ~${formatTokens(savedByPrune + savedByDedupe)} tokens`);
+  console.log(`\n  net prune   ~${formatTokens(netPrune)} tokens (gross saved − re-fetched)`);
+  console.log(`  total       ~${formatTokens(netPrune + savedByDedupe)} tokens`);
 
   const byTool = {};
   for (const m of prunes) byTool[m.tool] = (byTool[m.tool] || 0) + (m.saved || 0);
