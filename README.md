@@ -4,14 +4,51 @@ Context and token management for Claude Code.
 
 Three mechanisms, each hooked into a different point in the agent lifecycle:
 
-| What | Where | Effect |
+| What | Where | Status |
 |---|---|---|
-| Prune bulky tool results before they enter context | `PostToolUse` → `updatedToolOutput` | The main saving. File reads and command output usually dwarf the conversation. |
-| Deny re-reads of unchanged files | `PreToolUse` → `permissionDecision` | Removes redundant copies of the same file across a long session. |
-| Persist and restore project memory | `PreCompact` + `SessionStart` | Knowledge survives compaction instead of being summarized away. |
+| Prune bulky tool results before they enter context | `PostToolUse` → `updatedToolOutput` | Works; measured on the mechanism, not yet end-to-end |
+| Deny re-reads of unchanged files | `PreToolUse` → `permissionDecision` | Implemented, **untested** — never fired in a benchmark |
+| Persist and restore project memory across compaction | `PreCompact` + `SessionStart` | Implemented, **untested** — no benchmarked session has compacted |
 
-Pruning is reversible. Every shortened result carries a pointer to the full
+Pruning is reversible: every shortened result carries a pointer to the full
 text on disk, and the bundled skill teaches Claude when to follow it.
+
+## What it does, and what's been measured
+
+Read this before installing.
+
+**What pruning actually does.** It shrinks the tool output in the *prefix* that
+Claude Code re-reads from cache on every subsequent turn — not the biggest line
+item on your bill. Measured across real sessions (699 tool results over 12
+transcripts): tool output is **~1/5 of the peak context window** (median
+~18–20%) and **~0.2% of total billed input tokens**. The bill is dominated by
+*prefix size × turns* — the accumulated conversation and reasoning re-read every
+turn — not by any single result. Trimming a bulky result compounds (a smaller
+prefix is re-read more cheaply for the rest of the session), but the ceiling on
+that is tool output's ~1/5 share, and only the **tail** of it — the occasional
+bulk read or giant artifact — is large enough to prune at all.
+
+**There is no end-to-end savings number yet.** `bench/run.js` exists but has
+never been run. Everything measured so far is the *mechanism*: the `eval/`
+fixtures below (does pruning elide and preserve correctly) and a payload
+distribution sweep — not a real session's cost. See
+[`bench/RUNBOOK.md`](bench/RUNBOOK.md) for how a session-level number would be
+produced, and `ARCHITECTURE.md` §11 for the measurements.
+
+**Dedupe and memory are implemented but untested.** Dedupe fired **zero** times
+across four calibration runs — agents rarely re-read a byte-identical file.
+Memory never triggered because no benchmarked session reached compaction. Both
+may help on longer or multi-session work; that is unproven here.
+
+So, deciding whether to install:
+
+- ✅ Green: pruning elides and preserves correctly on fixtures (`npm run eval`,
+  0 critical patterns lost), fails open, and is reversible.
+- ⚠️ Red: no end-to-end savings number; dedupe and memory have never been
+  exercised.
+- Realistic upper bound on prune savings: bounded by tool output's ~1/5 share
+  of the window, and in practice the tail of that — meaningful on
+  exploration-heavy sessions, negligible on short ones.
 
 ## Install
 
@@ -56,7 +93,7 @@ Everything downstream depends on getting this right.
 bin/cli.js              init · doctor · stats · expand
 hooks/
   hooks.json            plugin manifest — the wiring
-  post-tool-use.js      prune (the main lever)
+  post-tool-use.js      prune (shrinks the re-read prefix)
   pre-tool-use.js       dedupe unchanged re-reads
   session-start.js      re-inject memory on start/resume/compact/fork
   pre-compact.js        snapshot transcript, optional memory gate
@@ -79,7 +116,7 @@ Optional `.ctxkeep.json` at the project root, merged over the defaults in
 ```json
 {
   "prune": {
-    "Read": { "maxLines": 400, "headLines": 100, "tailLines": 40 },
+    "Read": { "maxLines": 200, "headLines": 100, "tailLines": 40 },
     "Bash": { "maxLines": 120, "headLines": 30, "tailLines": 60 }
   },
   "dedupe": { "enabled": true },
@@ -110,7 +147,9 @@ function elides and preserves correctly — it does **not** prove the shortened
 result is actually delivered into the context window. That end-to-end path is a
 separate concern (the `replaceText` Read drop hid behind green eval numbers once
 already) and is verified separately by `test/delivery-check.sh`. See
-ARCHITECTURE.md §8.
+ARCHITECTURE.md §8. A session-level savings number is a further step again —
+produced by running the matrix in [`bench/RUNBOOK.md`](bench/RUNBOOK.md), which
+has not been run.
 
 ```
 fixture                     before   after   saved   inline  lost

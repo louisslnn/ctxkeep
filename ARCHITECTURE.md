@@ -434,10 +434,15 @@ The mechanism works; Phase 2 is about being able to trust it.
 - **The `replaceText` Read fix** (`14667e4`): see §8 — the pruning path that
   mattered most had never reached the model.
 
-Still open: **the benchmark itself (task 2.4)** is blocked on a missing
-`bench/RUNBOOK.md`/`run.js` (see `BENCH_PLAN.md`), so there is still no honest
-end-to-end savings number. Until there is, treat the `eval/` percentages as what
-the pruning *function* produces on fixtures, not as real-world savings.
+Still open: **the benchmark itself (task 2.4).** The harness now exists —
+`bench/RUNBOOK.md`, `bench/run.js`, `bench/report.js` and task specs under
+`bench/tasks/` — so the earlier blocker is gone. But **`bench/run.js` has never
+been run: there is no end-to-end, session-level savings number.** What has been
+measured is the *mechanism*, not the outcome — four manual `claude -p`
+calibrations and a 699-`tool_result` payload sweep (`bench/analyze-payloads.js`;
+see §11 and `BENCH_PLAN.md`), which characterise how much there is to prune, not
+what a real session bills. Until the matrix runs, treat the `eval/` percentages
+as what the pruning *function* produces on fixtures, not as real-world savings.
 
 ---
 
@@ -450,6 +455,16 @@ before anything was measured. `bench/analyze-payloads.js` (699 real
 same transcripts) now say otherwise. The claims are corrected in §1 and §5; the
 evidence is recorded here so the correction isn't just an assertion swapped for
 another.
+
+**Independently replicated.** Q1–Q3 below were derived twice — by two agents
+running concurrently on this branch in **separate sessions with no shared
+context**, from the same transcripts. They reached identical conclusions and
+numbers: Read→200 as the net-savings knee with **zero** net-negative prunes,
+tool output at ~1/5 of the peak window, Bash pruning at 0.08%, `keepMatching`
+kept as fidelity insurance, and no minimum-elision floor. The second session
+made no commits and reverted its own edits, so the tree is unaffected. Two
+independent measurements agreeing is replication, not a single reading — treat
+the findings below as reproduced, not as one analyst's take.
 
 ### 11.1 Tool output does not dominate the window (Q1)
 
