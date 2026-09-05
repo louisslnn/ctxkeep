@@ -5,6 +5,7 @@ import {
   mkdtempSync,
   mkdirSync,
   writeFileSync,
+  readFileSync,
   readdirSync,
   utimesSync,
   chmodSync,
@@ -187,19 +188,20 @@ test("pre-tool-use stays silent for a file never read this session", () => {
   assert.equal(out, null, "a first read must be allowed through");
 });
 
-test("pre-tool-use exempts a partial (offset/limit) re-read", () => {
+test("pre-tool-use denies an offset re-read of lines already delivered", () => {
+  // NEW CONTRACT: identity, not call-shape. An offset read of lines a prior
+  // whole-file read already delivered is a duplicate. (The old rule exempted
+  // every offset/limit read, which is why dedupe never fired.)
   const root = scratch();
   const file = join(root, "src.js");
   writeFileSync(file, bigOutput(), "utf8");
-  const past = Date.now() / 1000 - 3600;
-  utimesSync(file, past, past);
 
   runHook(
     "post-tool-use.js",
     {
-      session_id: "s-partial",
+      session_id: "s-offset-seen",
       tool_name: "Read",
-      tool_use_id: "toolu_p",
+      tool_use_id: "toolu_w",
       tool_input: { file_path: file },
       tool_response: { type: "text", file: { filePath: file, content: bigOutput() } },
     },
@@ -208,10 +210,84 @@ test("pre-tool-use exempts a partial (offset/limit) re-read", () => {
 
   const out = runHook(
     "pre-tool-use.js",
-    { session_id: "s-partial", tool_name: "Read", tool_input: { file_path: file, offset: 10 } },
+    { session_id: "s-offset-seen", tool_name: "Read", tool_input: { file_path: file, offset: 10, limit: 20 } },
     root,
   );
-  assert.equal(out, null, "a partial read is a different request and must be allowed");
+  assert.ok(out, "an offset re-read of seen lines must be denied");
+  assert.equal(out.hookSpecificOutput.permissionDecision, "deny");
+});
+
+test("pre-tool-use allows a read of a region not yet seen", () => {
+  // CONSTRAINT 1: only the first 50 lines were read; a read past them is new.
+  const root = scratch();
+  const file = join(root, "src.js");
+  writeFileSync(file, bigOutput(), "utf8");
+
+  runHook(
+    "post-tool-use.js",
+    {
+      session_id: "s-new-region",
+      tool_name: "Read",
+      tool_use_id: "toolu_head",
+      tool_input: { file_path: file, offset: 1, limit: 50 },
+      tool_response: { type: "text", file: { filePath: file, content: bigOutput() } },
+    },
+    root,
+  );
+
+  const out = runHook(
+    "pre-tool-use.js",
+    { session_id: "s-new-region", tool_name: "Read", tool_input: { file_path: file, offset: 100, limit: 40 } },
+    root,
+  );
+  assert.equal(out, null, "a genuinely new region must be allowed through");
+});
+
+test("post-tool-use flags a shell read that routes around a dedupe denial", () => {
+  // CONSTRAINT 2 instrumentation: a denial the agent bypasses with a shell read
+  // of the same path cost a turn and saved nothing — record it as net-negative.
+  const root = scratch();
+  const file = join(root, "src.js");
+  writeFileSync(file, bigOutput(), "utf8");
+
+  runHook(
+    "post-tool-use.js",
+    {
+      session_id: "s-routed",
+      tool_name: "Read",
+      tool_use_id: "toolu_r",
+      tool_input: { file_path: file },
+      tool_response: { type: "text", file: { filePath: file, content: bigOutput() } },
+    },
+    root,
+  );
+  const denied = runHook(
+    "pre-tool-use.js",
+    { session_id: "s-routed", tool_name: "Read", tool_input: { file_path: file } },
+    root,
+  );
+  assert.equal(denied.hookSpecificOutput.permissionDecision, "deny");
+
+  runHook(
+    "post-tool-use.js",
+    {
+      session_id: "s-routed",
+      tool_name: "Bash",
+      tool_use_id: "toolu_b",
+      tool_input: { command: `cat ${file}` },
+      tool_response: { type: "text", stdout: bigOutput() },
+    },
+    root,
+  );
+
+  const ledger = readFileSync(join(root, ".ctxkeep", "metrics.jsonl"), "utf8")
+    .trim()
+    .split("\n")
+    .map((l) => JSON.parse(l));
+  assert.ok(
+    ledger.some((m) => m.kind === "dedupe_routed" && m.path === file),
+    "a shell read of a denied path must be recorded as routed-around",
+  );
 });
 
 // --- SessionStart: inject memory --------------------------------------------

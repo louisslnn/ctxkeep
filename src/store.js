@@ -87,7 +87,7 @@ function statePath(config, sessionId) {
 
 /** Replay the append-only event log into the current session state. */
 export function readState(config, sessionId) {
-  const state = { reads: {}, turns: 0 };
+  const state = { reads: {}, denials: [], turns: 0, compactedAt: 0 };
   const path = statePath(config, sessionId);
   if (!existsSync(path)) return state;
   let raw;
@@ -105,12 +105,20 @@ export function readState(config, sessionId) {
       continue; // a torn line from a crashed write — skip it, keep replaying
     }
     if (ev.read && ev.read.path) {
-      state.reads[ev.read.path] = {
+      // A list, not a single record: dedupe unions the line ranges already
+      // delivered for a file (path+content identity), so a partial re-read of
+      // seen lines is caught while a new region is not.
+      (state.reads[ev.read.path] ??= []).push({
         at: ev.read.at,
         tokens: ev.read.tokens,
         cachedAt: ev.read.cachedAt ?? null,
-      };
+        hash: ev.read.hash ?? null,
+        start: ev.read.start ?? null,
+        end: ev.read.end ?? null,
+      });
     }
+    if (ev.denied && ev.denied.path) state.denials.push(ev.denied);
+    if ("compactedAt" in ev) state.compactedAt = Math.max(state.compactedAt, ev.compactedAt);
     if ("startedAt" in ev) state.startedAt = ev.startedAt;
     if (ev.compactGateUsed) state.compactGateUsed = true;
   }

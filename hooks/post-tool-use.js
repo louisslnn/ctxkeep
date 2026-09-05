@@ -14,13 +14,32 @@
 import { readInput, emit, guard, extractText, replaceText } from "../src/io.js";
 import { loadConfig } from "../src/config.js";
 import { pruneToolOutput } from "../src/prune/index.js";
-import { recordMetric, appendState } from "../src/store.js";
+import { recordMetric, appendState, readState } from "../src/store.js";
 import { estimateTokens } from "../src/tokenize.js";
+import { fileIdentity, requestedRange } from "../src/dedupe.js";
 
 guard(async () => {
   const input = await readInput();
   const config = loadConfig(process.env.CLAUDE_PROJECT_DIR || input.cwd);
   if (!config.enabled) return;
+
+  // Dedupe route-around: the agent was denied a re-read, then fetched the same
+  // path another way (a shell cat/sed/grep). That denial cost a turn and saved
+  // nothing — the net-negative case. Recording it lets `stats` show whether
+  // dedupe actually earns anything, instead of assuming every denial is a win.
+  if (config.dedupe?.enabled && input.tool_name === "Bash") {
+    const cmd = input.tool_input?.command || "";
+    const routed = readState(config, input.session_id).denials?.find(
+      (d) => d.path && cmd.includes(d.path),
+    );
+    if (routed) {
+      recordMetric(config, {
+        kind: "dedupe_routed",
+        session: input.session_id,
+        path: routed.path,
+      });
+    }
+  }
 
   const text = extractText(input.tool_response);
   if (!text || typeof text !== "string") return;
@@ -54,15 +73,29 @@ guard(async () => {
     filePath,
   });
 
-  // Record the read so PreToolUse can dedupe a repeat of the same file.
-  // Appended as its own log line so parallel PostToolUse hooks don't clobber.
-  if (config.dedupe?.enabled && filePath) {
+  // Record the read so PreToolUse can dedupe a later read of the same lines.
+  // Store the content hash and the delivered line range (file identity), so a
+  // partial re-read of seen lines is caught and a new region is not. Appended as
+  // its own log line so parallel PostToolUse calls don't clobber each other.
+  if (config.dedupe?.enabled && filePath && input.tool_name === "Read") {
+    let ident = null;
+    try {
+      ident = fileIdentity(filePath);
+    } catch {
+      /* file gone by now — record what we can, dedupe just won't match */
+    }
+    const [start, end] = ident
+      ? requestedRange(input.tool_input?.offset, input.tool_input?.limit, ident.lineCount)
+      : [null, null];
     appendState(config, input.session_id, {
       read: {
         path: filePath,
         at: Date.now(),
         tokens: result.originalTokens,
         cachedAt: result.cachedAt ?? null,
+        hash: ident?.hash ?? null,
+        start,
+        end,
       },
     });
   }

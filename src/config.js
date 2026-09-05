@@ -58,9 +58,11 @@ export const DEFAULTS = {
 
   dedupe: {
     enabled: true,
-    // Re-reading an unchanged file within the same session is replaced with a
-    // one-line reference instead of the file body.
-    strategy: "mtime+size",
+    // Identity, not call-shape: a read is a duplicate when the file is unchanged
+    // (content hash) and every line it would return was already delivered this
+    // session (union of prior read ranges) — so offset/limit re-reads of seen
+    // lines are caught, a new region is not, and a compaction resets the record.
+    strategy: "content-hash+ranges",
   },
 
   memory: {

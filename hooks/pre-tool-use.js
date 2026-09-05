@@ -2,18 +2,23 @@
 /**
  * PreToolUse — dedupe.
  *
- * Agents re-read the same file repeatedly across a long session. If the file
- * hasn't changed on disk since the last read in this session, there is no new
- * information in reading it again, only cost.
+ * Agents revisit the same file across a long session — but with grep and offset
+ * reads, not byte-identical whole-file re-reads. So dedupe keys on *file
+ * identity* (path + content hash + the line ranges already delivered), not on
+ * the exact call. A read is denied only when the file is unchanged and every
+ * line it would return is already in the conversation above.
  *
- * This denies the call with a reason rather than rewriting the input, because
- * the reason text is what tells the model where the content already is. A deny
- * here is cheap and recoverable: the model reads the cached copy instead.
+ * Two safety rules (see src/dedupe.js): never deny a region the agent has not
+ * seen yet, and never deny across a compaction that may have summarised the
+ * earlier read away. A denial is recorded so PostToolUse can tell whether the
+ * agent then routed around it (a shell read of the same path) — the net-negative
+ * case where the denial cost a turn and saved nothing.
  */
-import { statSync } from "node:fs";
 import { readInput, emit, guard } from "../src/io.js";
 import { loadConfig } from "../src/config.js";
-import { readState, recordMetric } from "../src/store.js";
+import { readState, recordMetric, appendState } from "../src/store.js";
+import { fileIdentity, requestedRange, dedupeDecision } from "../src/dedupe.js";
+import { estimateTokens } from "../src/tokenize.js";
 
 guard(async () => {
   const input = await readInput();
@@ -25,40 +30,59 @@ guard(async () => {
   if (!filePath) return;
   if (config.passthroughPaths?.some((p) => filePath.includes(p))) return;
 
-  // A partial read is a different request from the one we cached.
-  if (input.tool_input?.offset || input.tool_input?.limit) return;
-
   const state = readState(config, input.session_id);
-  const previous = state.reads?.[filePath];
-  if (!previous) return;
+  const priorReads = state.reads?.[filePath];
+  if (!priorReads || !priorReads.length) return;
 
-  let mtime;
+  let id;
   try {
-    mtime = statSync(filePath).mtimeMs;
+    id = fileIdentity(filePath);
   } catch {
-    return; // file moved or gone — let the real tool report that
+    return; // moved or gone — let the real tool report that
   }
-  if (mtime > previous.at) return; // genuinely changed since we read it
 
+  const requested = requestedRange(
+    input.tool_input?.offset,
+    input.tool_input?.limit,
+    id.lineCount,
+  );
+
+  const { deny } = dedupeDecision({
+    priorReads,
+    requested,
+    currentHash: id.hash,
+    compactedAt: state.compactedAt ?? 0,
+  });
+  if (!deny) return;
+
+  // Tokens kept out of context: the region that would have been re-delivered.
+  const region = id.content.split("\n").slice(requested[0] - 1, requested[1]).join("\n");
+  const saved = estimateTokens(region);
+
+  // Record the denial so a later shell read of this path counts as routed-around.
+  appendState(config, input.session_id, {
+    denied: { path: filePath, start: requested[0], end: requested[1], at: Date.now() },
+  });
   recordMetric(config, {
     kind: "dedupe",
     session: input.session_id,
     path: filePath,
-    saved: previous.tokens ?? 0,
+    start: requested[0],
+    end: requested[1],
+    saved,
   });
 
-  const where = previous.cachedAt
-    ? ` The full text from that read is at ${previous.cachedAt}.`
-    : "";
+  const cachedAt = priorReads.map((r) => r.cachedAt).filter(Boolean).pop();
+  const where = cachedAt ? ` The full text from that read is at ${cachedAt}.` : "";
 
   emit({
     hookSpecificOutput: {
       hookEventName: "PreToolUse",
       permissionDecision: "deny",
       permissionDecisionReason:
-        `This file was already read in this session and has not changed on disk since.` +
-        ` Its contents are already in the conversation above.${where}` +
-        ` Re-read it only after editing it, or with an offset/limit for a specific range.`,
+        `Lines ${requested[0]}–${requested[1]} were already read in this session and the file ` +
+        `is unchanged on disk; they are already in the conversation above.${where}` +
+        ` Re-read only after editing the file, or request a line range you have not read yet.`,
     },
   });
 });
