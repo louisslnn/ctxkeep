@@ -8,13 +8,18 @@ are. Read this before changing anything.
 ## 1. The one-paragraph model
 
 Claude Code's context window fills up with three things: the conversation, the
-system prompt, and tool results. In an agentic coding session the third one
-dominates — a single `Read` of a large file or a verbose test run can outweigh
-the entire conversation around it. ctxkeep sits in the agent lifecycle and does
-three things: it **shortens tool results before they enter the context window**,
-it **refuses redundant re-reads of unchanged files**, and it **persists the
-knowledge that would otherwise be destroyed by compaction**. Everything else in
-the repo is plumbing around those three ideas.
+system prompt, and tool results. Tool results are a **meaningful minority** of
+the window — measured across real sessions, roughly one fifth at its peak, not
+the dominant term (§11.1). What actually dominates cost is the accumulated
+conversation and the model's own reasoning, re-read from cache on every turn; a
+single bulky `Read` or verbose test run is worth shaping mainly because trimming
+it shrinks that re-read prefix for the rest of the session. So the lever is real
+but bounded, and concentrated in the tail — the occasional oversized result, not
+the median one. ctxkeep sits in the agent lifecycle and does three things: it
+**shortens tool results before they enter the context window**, it **refuses
+redundant re-reads of unchanged files**, and it **persists the knowledge that
+would otherwise be destroyed by compaction**. Everything else in the repo is
+plumbing around those three ideas.
 
 ---
 
@@ -174,7 +179,7 @@ than the pruning saves. Character-ratio heuristic, honest about being one.
 
 ## 5. The three mechanisms
 
-### Mechanism 1 — Prune (the main lever)
+### Mechanism 1 — Prune (the primary mechanism, a bounded lever)
 
 **Hook:** `PostToolUse` → `updatedToolOutput`
 **Applies to:** `Read`, `Bash`, `Grep`, `Glob`, `WebFetch`, and MCP tools
@@ -184,8 +189,13 @@ kept, the middle is elided with a marker saying how much was removed, error-ish
 lines are salvaged from the middle regardless of position, and the full text
 goes to disk with a pointer appended.
 
-This is where most of the saving comes from, because it targets the largest
-thing in the window.
+This is the biggest of the three savings, but "biggest" is not "big": tool
+output is ~1/5 of the window and only its tail is bulky enough to prune, so the
+realistic gain is modest and lives in the occasional oversized result (§11.1).
+`Bash` output specifically almost never crosses its threshold — agents pipe
+through `grep`/`tail` — so Bash pruning moves ~0.08% of tool bytes; its
+`keepMatching` regex earns its keep as fidelity insurance on the rare prune, not
+as a savings lever (§11.2).
 
 **Why it's safe:** reversible. **Why it might not be:** the model has to
 correctly judge when to expand. That judgment is what the skill teaches, and
@@ -428,3 +438,88 @@ Still open: **the benchmark itself (task 2.4)** is blocked on a missing
 `bench/RUNBOOK.md`/`run.js` (see `BENCH_PLAN.md`), so there is still no honest
 end-to-end savings number. Until there is, treat the `eval/` percentages as what
 the pruning *function* produces on fixtures, not as real-world savings.
+
+---
+
+## 11. What the measurements overturned
+
+Two of this document's load-bearing claims — §1's "tool results dominate the
+context window" and §5's framing of pruning as "the main lever" — were written
+before anything was measured. `bench/analyze-payloads.js` (699 real
+`tool_result`s) and `bench/analyze-context-share.js` (per-session usage from the
+same transcripts) now say otherwise. The claims are corrected in §1 and §5; the
+evidence is recorded here so the correction isn't just an assertion swapped for
+another.
+
+### 11.1 Tool output does not dominate the window (Q1)
+
+Per session, tool output measured against the size of the context window at its
+**peak** (the largest single-request prefix — an upper bound on tool output's
+share, since a no-compaction session accumulates every result):
+
+| denominator | tool-output share |
+|---|---|
+| peak context window (per session) | **12–35%, median ~18–20%** |
+| total **billed** input tokens (incl. cache re-reads) | **0.2%** |
+
+Tool output is a **meaningful minority of the window — roughly one fifth — not
+the dominant term.** The largest thing in the window is the accumulated
+conversation and the model's own reasoning, re-read from cache every turn: across
+these sessions billed input was **~178M tokens**, of which cache-read (the prefix
+re-read) is the overwhelming majority and tool output is 0.2%. So the real cost
+driver is prefix size × turns, not the one-time cost of any single result.
+
+That does not make pruning worthless — a smaller prefix is re-read more cheaply
+for the rest of the session, so trimming a bulky result compounds. But its
+leverage is bounded by tool output's ~1/5 share of the window, and only the
+**tail** of that (the occasional bulk read / giant artifact) is bulky enough to
+prune at all. This is the same conclusion the four calibrations reached from the
+other direction (BENCH_PLAN §6): the payoff is real but modest and concentrated
+in the tail.
+
+### 11.2 Bash error-salvage: keep the mechanism, drop the "load-bearing" story (Q2)
+
+`bench/analyze-payloads.js` sweep: **Bash pruning moves 0.08% of tool bytes at
+any threshold** (120/80/60 lines). It is not a savings lever and this document
+should never have implied it was. A well-behaved agent pipes command output
+through `grep`/`tail`, so almost nothing crosses the Bash threshold in the first
+place.
+
+But `keepMatching` was never a savings feature — it is **correctness insurance on
+the rare Bash prune that does fire.** When a 340-line failing test run *is*
+pruned, the head/tail window can bury the one failing assertion in the elided
+middle; `keepMatching` salvages it. The cost is a few regex alternatives run only
+on already-pruned Bash output — negligible — and the downside of removing it is
+exactly the fixture-losing failure the `CONTEXT.md` constraint records from the
+first eval run. The `go test` additions (`\bFAIL\b`, `_test\.go:\d+:`, task 2.3)
+target the one common runner that interleaves failures mid-run, where the risk is
+highest.
+
+**Recommendation: keep the mechanism as-is; fix the narrative.** Stop presenting
+Bash pruning as load-bearing (here and in §4/§5); document `keepMatching` as
+cheap fidelity insurance on a rare path, which is what the data supports.
+
+### 11.3 A minimum-elision floor is not worth adding (Q3)
+
+The fixed retrieval pointer costs **~54 heuristic tokens**, charged to every
+prune regardless of how much was elided. The worry: near the threshold a prune
+might save so little that the pointer eats the gain, and the prune becomes a
+re-fetch candidate with almost no upside. Measured across the real Read results
+that prune at the new 200-line rule:
+
+| net saved / prune (tokens) | min | p25 | median | p90 | max |
+|---|---|---|---|---|---|
+| | **662** | 1,032 | 1,551 | 9,519 | 21,852 |
+
+**Zero prunes net ≤ 0**, and the *smallest* still nets 662 tokens — the 54-token
+pointer is at most ~8% of the gain even at the low end. A floor sweep (skip when
+projected net saving < F) skips **nothing** until F≈800, and F=800 would forgo
+only 2.2k of 53.8k total savings to drop 3 prunes. So a floor would add a second
+tunable and a config surface for **no measurable benefit**.
+
+The reason is that `maxLines` already *is* the floor: once a Read exceeds 200
+lines, head(100)+tail(40) elides ≥60 lines, and 60 lines of code
+(~11 tokens/line) dwarfs a 54-token pointer. **Recommendation: do not add a
+floor.** Revisit only if `maxLines` is ever pushed down near the 140-line
+head+tail sum, where the smallest prunes would start approaching the pointer
+cost. Reproduce with `node bench/analyze-context-share.js`.
