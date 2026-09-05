@@ -263,12 +263,117 @@ answer whether prettier's source forces a bulk read.
    count 0.** A competent agent self-limits — by grep+offset read on validator.js,
    by git+offset read on prettier — so bulky content never enters the window.
 
-### Do NOT run the matrix on this fixture yet
+*(This run's prune-0 conclusion is superseded by §6 — the leak was removed and
+the task re-run, which changed the result.)*
 
-Before it is valid: (a) rebuild with a **neutral** commit message (no fix SHA),
-which changes the fixture SHA in the spec; (b) re-calibrate once to see whether,
-absent the leak, the agent is actually forced to bulk-read the 1,344-line file
-(the clean test of criterion (a)). If it still offset-reads and prune stays 0,
-the reframed hypothesis is falsified twice and the measurable-pruning target has
-to be reconsidered entirely — possibly the dedupe shape (date-fns, criterion d)
-rather than single-shot prune. `bench/run.js` was not run; no matrix quota spent.
+---
+
+## 6. Leak-free re-calibration: the first non-zero prune surface (2026-09-04)
+
+The §5 run was confounded, so the fixture was rebuilt genuinely leak-free and
+run twice — once with ctxkeep's hooks **off**, once **on**. This is the first
+time any calibration has run *with the tool active*.
+
+### Rebuilding the fixture leak-free (SHA `9944126d`)
+
+Basing on post-fix `HEAD` leaked the answer three ways, each closed:
+1. **Git history** — the fix `5a0fdd974` is a genuine ancestor, so `git log`
+   shows *"Fix unstable trailing comment on a parenthesized arrow chain"*
+   regardless of my commit message. → Rebuilt as a **fresh `git init`** repo:
+   one neutral commit, no ancestry, no origin, no fix object in the odb
+   (`git show 5a0fdd974` fails; 0 dangling commits).
+2. **Changelog** — `changelog_unreleased/javascript/19930.md` (in the HEAD tree)
+   *fully explains the bug and fix*; a grep of the changelog hands over the
+   answer. Its sibling `19893.md` describes the same bug class. → Both removed.
+3. My own commit message (from §5). → Neutral: *"bench fixture: failing arrow
+   comment tests"*.
+
+Verified: `git log` shows one neutral commit; no tree grep hit for the fix; 2
+failures still reproduce; reset survives.
+
+**Construction lesson (generalised):** a HEAD-based "revert one file" fixture is
+inherently leaky — the fix's commit, changelog, and sometimes release notes all
+survive in the tree/history. A leak-free fixture must be built so the fix is
+*absent*, not merely renamed.
+
+### RUN A — hooks OFF, leak-free
+
+| Metric | Leaked run (§5) | RUN A (leak-free) |
+|---|---|---|
+| num_turns | 14 | **53** |
+| total_cost_usd | $0.168 | **$3.30** ‡ |
+| total tool output | 12.7 KB | **153.6 KB** |
+| largest single result | 80 lines | **3,240 lines** (a bare Read of the .snap) |
+| results ≥120 lines | 0 | 5 |
+| results >400 lines (Read thresh) | 0 | 1 |
+
+‡ wall was ~4.7 h — the run stalled repeatedly on **subscription rate limits**
+(RUNBOOK step 0 warns to use an API key; I had none). Cost/wall are confounded;
+treat turn count and payload sizes as the reliable signals.
+
+Removing the leak turned a 14-turn git-lookup into a **genuine 53-turn
+exploration** of an unfamiliar codebase — exactly the regime where bulky output
+might accumulate. And it did, partly: 153 KB of tool output, one 3,240-line
+Read. But note the shape: `handle-comments.js` (1,344 lines) was **still read in
+5 offset-limited chunks** (≤150 lines each) — the agent self-limits *the file it
+is pointed at*. The prune surface came instead from (i) whole-file reads of
+**unfamiliar helper files** it discovered (`attach.js` 394, `print.js` 328/282,
+all just under the 400-line threshold) and (ii) one accidental huge artifact
+(the 3,240-line snapshot). Prune count at current thresholds: **1**.
+
+### RUN B — hooks ON, leak-free (same prompt, same fixture)
+
+Preflight: hooks installed at **user** level; confirmed firing under `-p`
+(SessionStart wrote `.ctxkeep/state` during a headless run) and the prune path
+confirmed on a synthetic 1,000-line Read (shortened to head100+tail40, pointer
+written, metric recorded).
+
+| Metric | Value |
+|---|---|
+| num_turns | 53 |
+| total_cost_usd | $1.90 |
+| duration | ~22 min (no rate-limit stall this time) |
+| Result | **success** — only `handle-comments.js` changed, no test/snapshot, 28,794 js-family tests pass |
+| **ctxkeep ledger** | **pruned 2 results, ~8.1k heuristic tokens** (Read `handle-comments.js` ~7,544; Bash ~602); **dedupe 0; compaction 0** |
+
+In RUN B the agent **bulk-read `handle-comments.js` whole**, and ctxkeep pruned
+it (~7.5k tokens) — run-to-run variance: sometimes the agent chunks the big file
+(RUN A), sometimes it bulk-reads it (RUN B). When it bulk-reads, ctxkeep bites.
+
+**Do not read the $3.30→$1.90 drop as savings.** Same 53 turns; the difference
+is dominated by RUN A's rate-limit/caching confound and a different exploration
+path, at n=1 each. The only defensible ctxkeep signal is the ledger: **~8.1k
+heuristic tokens on a session whose footprint was ~88.7k cache-creation /
+~2.35M cache-read input tokens** — a modest slice, and 2 prunes out of ~52 tool
+results. The task still succeeded, so ctxkeep did not break it.
+
+### Verdict (the honest read; see the session report for the argued version)
+
+- **(a) Fixtures still slightly wrong?** Partly, but the *class* is the problem,
+  not the instance. A single-bug fix task gives one genuinely-hard region; even
+  then a competent agent self-limits the file it is handed. The task shape that
+  would reliably trigger pruning is a **long multi-file refactor / wide
+  exploration across many unfamiliar files** (or a **multi-session** task that
+  actually compacts, exercising memory) — not single-bug fixes.
+- **(b) Thresholds too high — this is the strongest concrete finding.** The
+  agent's whole-file reads cluster at **~150–400 lines** (`attach.js` 394,
+  `print.js` 328/282, `handle-comments` chunks ≤150). The **400-line Read
+  threshold sits at the top of that distribution and barely catches anything**;
+  only a freak 3,240-line snapshot tripped it in RUN A. A Read threshold nearer
+  **~150–200 lines** would have pruned the real accumulation (4–6 results
+  instead of 1–2). Fidelity cost: more head/tail elisions the agent might have
+  to expand — measure the re-fetch rate before lowering.
+- **(c) Modern agents self-limit; prune value on this class is near zero, and
+  the tool's value likely lies elsewhere.** Four calibrations: three at prune 0,
+  one at 2. The agent greps, offset-reads, and chunks big files on its own.
+  ctxkeep's payoff is concentrated in the tail (the occasional bulk read / giant
+  artifact) and, untested here, in **dedupe on re-read-heavy tasks** and
+  **memory across compaction** — neither of which a single-bug, single-session
+  fixture exercises (dedupe 0, compaction 0 in both runs).
+
+**Bottom line:** on single-bug fixture tasks the pruning mechanism earns little
+because agents already avoid loading bulk. Before investing more in prune
+tuning, either (b) lower the Read threshold and measure the fidelity cost, or
+pivot the benchmark to the shapes where the tool could actually pay —
+wide/long exploratory sessions and multi-session memory. `bench/run.js` was not
+run; no matrix quota spent.
