@@ -377,3 +377,157 @@ tuning, either (b) lower the Read threshold and measure the fidelity cost, or
 pivot the benchmark to the shapes where the tool could actually pay —
 wide/long exploratory sessions and multi-session memory. `bench/run.js` was not
 run; no matrix quota spent.
+
+---
+
+## 7. Exploratory benchmark design (2026-09-05) — DESIGN ONLY, nothing run
+
+Every fixture so far is a single-bug fix: one hard region, the agent self-limits,
+prune ≈ 0, dedupe 0, memory 0 (§6). Q1 (§11) established the cost driver is
+**prefix size × turns**, so the mechanism that could matter is prefix growth over
+a *long* session — not any single result. This section designs the fixture shape
+the project has never tested. It is a design; no repo was constructed and
+`bench/run.js` was not run.
+
+### 7.1 The four requirements, and the tension between them
+
+- **Long (40+ turns):** enough that prefix growth dominates and compaction
+  *plausibly* triggers — the only way memory is exercised at all.
+- **Wide (many unfamiliar files):** the agent must *read to build a model*, not
+  grep to a known symbol — the only condition under which the 200-line Read prune
+  fires on more than a freak artifact.
+- **Re-read heavy (same files revisited):** the only condition under which dedupe
+  does anything.
+- **Verifiable (programmatic pass/fail):** or the run is unscoreable. This is the
+  hard one — exploratory tasks resist strict verification.
+
+Two design tensions must be stated up front because they shape every candidate:
+
+1. **Verifiability vs. exploration.** The more open-ended the task, the weaker the
+   verifier. A feature with a brought-forward acceptance suite is strictly
+   scoreable but partly bounded (the tests define "done"); documentation quality
+   is genuinely exploratory but has *no* programmatic verifier. You cannot have
+   maximum of both.
+2. **Pruning delays the compaction memory needs.** With Read→200 active, the
+   prefix grows *slower*, so a task tuned to compact in the `off` arm may **not**
+   compact in the `prune`/`full` arms. Memory then fires in one arm and not
+   another — confounding the comparison. Measuring memory honestly needs a design
+   where compaction is forced (a hard context cap) or a multi-session A/B, not a
+   single long run.
+
+### 7.2 Three candidate tasks
+
+Repos anchored where possible to ones already cloned + installable (§0.2). All
+would be constructed SWE-bench-style (check out before the change, bring the
+change's *tests* forward) and **leak-free** per the §6 rule (fresh `git init`,
+strip changelog/history that names the change).
+
+**Candidate D — implement a feature spanning modules (eslint).**
+- *Repo:* `eslint` (cloned, `node Makefile.js test`, mocha). *Shape:* check out
+  the parent of a real `feat:` commit that touched core + multiple `lib/rules/*`
+  (e.g. a new language/scope capability threaded through several rules), bring its
+  test files forward, prompt names the failing behaviour, **not** the files. To
+  make the tests pass the agent must read existing rules + shared
+  `lib/rules/utils/ast-utils.js` and the scope analyser to learn the (un-greppable)
+  rule/AST API.
+- *Verifier (strict):* `node Makefile.js test` green **and** the brought-forward
+  test files pass **and** `git diff --exit-code` on all `tests/**` **and** no
+  `.only(`/`.skip(` introduced. Programmatic, strong.
+
+**Candidate E — raise coverage of a complex untested module.**
+- *Repo:* a branch-heavy parser/state-machine module in a c8-instrumentable repo
+  — concretely `marked` (lexer/Tokenizer/Parser) or `eemeli/yaml` (parse →
+  compose → stringify). Would need cloning + a screening pass like §0.2. *Shape:*
+  pick a module whose current branch coverage is low; prompt: raise it to ≥ T%
+  without editing source. The agent re-reads the *same* target module across many
+  turns as it chases uncovered branches — the strongest dedupe surface of the
+  three.
+- *Verifier (weak→partial):* `c8`/jest coverage on the target file ≥ T% branch
+  **and** suite green is programmatic but **gameable** — coverage counts lines
+  executed, not asserted; an agent can hit branches with assertion-free tests.
+  The *strict* verifier is a **mutation score** (Stryker) on the target module ≥
+  M%, which is real but slow/expensive (minutes–tens of minutes per run, ×24).
+  Honest partial if Stryker is too costly: coverage ≥ T% **and** a lint that every
+  new `test(...)` contains ≥1 assertion — catches the crudest gaming, not all.
+
+**Candidate F — migrate a deprecated API across the codebase (cautionary).**
+- *Repo:* any with a real migration commit touching many call sites (e.g. an
+  internal helper rename, `assert.equal`→`assert.strictEqual`, a deprecated option
+  swept out). *Shape:* check out before it; prompt: replace every use of X with Y,
+  suite must pass.
+- *Verifier (strict, trivial):* `grep -rc '<oldAPI>' src == 0` **and** suite
+  green. The easiest verifier of the three — and that is exactly the problem: the
+  task is **mechanical**. The agent greps to the call sites and edits them; it
+  self-limits (the §6 trap at scale), visits each file roughly once. Included as a
+  **negative control**, not a real bet.
+
+### 7.3 Which mechanism each would actually exercise (honest)
+
+| Candidate | Prune (Read→200) | Dedupe | Memory (compaction) | Verifier |
+|---|---|---|---|---|
+| **D** feature/eslint | **High** — must read many unfamiliar rule/util files whole | Med — shared `ast-utils`/scope revisited | Low–Med — long enough to *maybe* compact | **Strong** |
+| **E** coverage | Med — reads the complex module + deps | **Highest available** — re-reads the target across turns | Med — long | **Weak** (gameable; strict = costly mutation) |
+| **F** migration | **Low** — mechanical grep-and-edit | Low — each file visited once | Low | Strong but the task is trivial to self-limit |
+
+### 7.4 Matrix cost (honest estimate)
+
+Anchored to observed runs (RUN B: 53 turns, ~$1.90; exploratory tasks run longer
+and read more, and the `full` arm's dedupe denials cost extra turns). With an API
+key (no subscription rate-limit stall):
+
+- **Per run:** ~$2–4 (40–70 turns), plus verify time. eslint's full suite is
+  minutes, so each of the 24 verifies adds real wall time; mutation-scored E is
+  far worse (tens of minutes/verify).
+- **Shake-out** (3 arms × 3 trials = 9 runs): **~$20–40**, ~2–4 h wall.
+- **Full matrix** (3 arms × 8 trials = 24 runs): **~$50–100**, ~half a day wall.
+- **Per task total ~$70–140.** RUNBOOK step 5 wants 3–4 shapes before
+  generalising → **~$250–500** for a defensible multi-task claim. The dominant
+  uncertainty is turn count: any task that balloons to `maxTurns` inflates this.
+
+### 7.5 Recommendation — and whether to run at all
+
+**Run Candidate D, shake-out only, first.** It is the one task that (a) has a
+strict verifier and (b) genuinely exercises the mechanism Q1 says matters (prune
+on unfamiliar wide reads at the new 200 threshold). Do the 9-run shake-out
+(~$20–40), read the ledger for **prune count, re-fetch rate, and net prune**, and
+only escalate to the full 24-run matrix if the shake-out shows a prune signal
+*and* success rates hold across arms. Do **not** commit to the full 3–4-shape
+matrix up front.
+
+**Do not run E or F expecting them to settle dedupe or memory.** E is the only
+dedupe-oriented shape and its verifier is the weakest; F is a negative control.
+If the specific goal is validating dedupe or memory, the honest answer is **this
+fixture class is not worth running for that** — see §7.6.
+
+### 7.6 Do I expect the result to differ from the four calibrations? (blunt)
+
+Asked directly, before money is spent:
+
+- **Prune: yes, this will move clearly off zero — this is the one number worth
+  buying.** The payload sweep (§11 / STEP 1) already shows ~12% of *all* Reads
+  cross the new 200-line threshold, and RUN A (leak-free, hard) showed the agent
+  reading unfamiliar helper files whole at 150–394 lines — sizes that pruned at 0
+  under the old 400 rule and prune now. A wide task multiplies exactly those
+  reads. Expect a real prune count and, more importantly, the **first honest
+  net-prune-minus-re-fetch number on a long session** — which is the whole point.
+- **Dedupe: no, I expect it to stay near zero even on E.** Dedupe requires a
+  **byte-identical re-read**, and agents don't revisit files that way — they grep,
+  offset-read the relevant span, or work from memory. The four calibrations hit
+  dedupe 0 not because the tasks lacked re-reads but because the re-reads weren't
+  identical. A better fixture cannot fix a **mechanism–behaviour mismatch**; if
+  dedupe is to matter it needs redesigning around *file identity* (path + mtime/
+  hash, any offset) rather than exact-text equality. Say so before paying to
+  re-confirm zero.
+- **Memory: at best one compaction snapshot; effectively unmeasured.** A 40+ turn
+  wide task on a big repo *might* compact and fire the snapshot/restore — but (i)
+  active pruning delays that compaction (§7.1), and (ii) a single-session run can
+  only show memory *fired*, never that restored context *helped*. Scoring
+  memory's value needs a multi-session A/B, which this shape is not.
+
+**Bottom line:** worth spending the shake-out (~$20–40) on **Candidate D** for the
+first real prune/re-fetch number on a long session — that number is genuinely
+unknown and decision-relevant. It is **not** worth spending on dedupe or memory
+validation: dedupe needs a mechanism change, memory needs a different experiment.
+If the goal is specifically "prove dedupe/memory work," the honest recommendation
+is **do not run** — fix the dedupe mechanism and design a multi-session memory
+test instead.
