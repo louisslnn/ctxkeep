@@ -62,14 +62,18 @@ So, deciding whether to install:
 ## Install
 
 ctxkeep installs from source and has no runtime dependencies. Clone the
-repository, then install the CLI from the checkout:
+repository and install the CLI from the checkout:
 
 ```bash
+git clone https://github.com/louisslnn/ctxkeep.git
+cd ctxkeep
 npm install -g .
 ```
 
-That puts the `ctxkeep` command on your PATH. Then, inside each project you want
-ctxkeep to manage:
+That puts the `ctxkeep` command on your PATH. **Keep the clone in place** — on
+most npm versions `npm install -g .` links the global CLI back to this checkout
+(and `ctxkeep init` writes hook paths that resolve to it), so deleting the clone
+breaks the install. Then, inside each project you want ctxkeep to manage:
 
 ```bash
 ctxkeep init
