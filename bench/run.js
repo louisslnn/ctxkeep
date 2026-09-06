@@ -118,16 +118,53 @@ function verify() {
 }
 
 function readCtxkeepLedger() {
+  const empty = {
+    prunes: 0, dedupes: 0, dedupeRouted: 0, refetches: 0, compacts: 0,
+    savedByPrune: 0, savedByDedupe: 0, refetchTokens: 0,
+    routedPaths: 0, netPrune: 0, netDedupe: 0, claimedSaved: 0,
+  };
   const path = join(repo, ".ctxkeep", "metrics.jsonl");
-  if (!existsSync(path)) return { prunes: 0, dedupes: 0, claimedSaved: 0 };
+  if (!existsSync(path)) return empty;
   const rows = readFileSync(path, "utf8")
     .split("\n")
     .filter(Boolean)
     .map((l) => JSON.parse(l));
+
+  const prunes = rows.filter((r) => r.kind === "prune");
+  const dedupes = rows.filter((r) => r.kind === "dedupe");
+  const dedupeRouted = rows.filter((r) => r.kind === "dedupe_routed");
+  const refetches = rows.filter((r) => r.kind === "refetch");
+  const compacts = rows.filter((r) => r.kind === "compact");
+
+  const savedByPrune = prunes.reduce((n, r) => n + (r.saved || 0), 0);
+  const savedByDedupe = dedupes.reduce((n, r) => n + (r.saved || 0), 0);
+  const refetchTokens = refetches.reduce((n, r) => n + (r.tokens || 0), 0);
+
+  // A denial the agent routes around (a shell read of the denied path) cost a
+  // turn and saved nothing — count it as net-negative, mirroring bin/cli.js.
+  const deniedPaths = new Set(dedupes.map((r) => r.path).filter(Boolean));
+  const routedPaths = new Set(
+    dedupeRouted.map((r) => r.path).filter((p) => deniedPaths.has(p)),
+  );
+  const netDedupe = dedupes.length
+    ? Math.max(0, (savedByDedupe * (dedupes.length - routedPaths.size)) / dedupes.length)
+    : 0;
+  const netPrune = savedByPrune - refetchTokens;
+
   return {
-    prunes: rows.filter((r) => r.kind === "prune").length,
-    dedupes: rows.filter((r) => r.kind === "dedupe").length,
-    claimedSaved: rows.reduce((n, r) => n + (r.saved || 0), 0),
+    prunes: prunes.length,
+    dedupes: dedupes.length,
+    dedupeRouted: dedupeRouted.length,
+    refetches: refetches.length,
+    compacts: compacts.length,
+    savedByPrune,
+    savedByDedupe,
+    refetchTokens,
+    routedPaths: routedPaths.size,
+    netPrune,
+    netDedupe,
+    // Kept for backwards-compat with anything reading the old field name.
+    claimedSaved: savedByPrune + savedByDedupe,
   };
 }
 
@@ -203,7 +240,12 @@ console.log(`Preflight: confirming hooks fire in -p mode…`);
 resetRepo();
 writeArmConfig("full");
 try {
-  execFileSync("claude", ["-p", "Read the README and reply with its first heading.",
+  // The prompt must force a single FULL-file read. A terse ask like "reply with
+  // the first heading" makes the agent page the file in <200-line windows (it
+  // self-limits), nothing crosses the prune threshold, and this check false-
+  // aborts even though the hooks are firing. Asking it to summarise the whole
+  // file is what produces a real full read — and therefore a real prune.
+  execFileSync("claude", ["-p", "Read the README file in full and summarise what this project is in two sentences.",
     "--output-format", "json", "--max-turns", "3", "--model", model,
     "--dangerously-skip-permissions"],
     { cwd: repo, encoding: "utf8", maxBuffer: 16 * 1024 * 1024, timeout: 180000 });
