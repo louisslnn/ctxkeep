@@ -239,6 +239,12 @@ Note the split: **hooks never write memory, Claude does.** Deciding what counts
 as durable is judgment, so it lives in the skill. The hooks only snapshot the
 transcript and restore what was written.
 
+**This mechanism is untested.** No benchmarked session reached compaction — the
+`compact` path that is the whole point never fired — so memory has never been
+exercised end to end. It may help on longer or multi-session work; that is
+unproven here, and measuring it needs a multi-session design (§10, RUNBOOK scope
+note).
+
 ---
 
 ## 6. Invariants
@@ -413,13 +419,16 @@ The mechanism works; Phase 2 is about being able to trust it.
 
 Still open: **the benchmark itself (task 2.4).** The harness now exists —
 `bench/RUNBOOK.md`, `bench/run.js`, `bench/report.js` and task specs under
-`bench/tasks/` — so the earlier blocker is gone. But **`bench/run.js` has never
-been run: there is no end-to-end, session-level savings number.** What has been
+`bench/tasks/` — and `bench/run.js` has now been run once, as a 9-run shake-out
+on a wide fixture. But **it produced no valid session-level savings number: 0 of
+9 runs passed the task (§13), so the cost comparison is void.** What has been
 measured is the *mechanism*, not the outcome — four manual `claude -p`
-calibrations and a 699-`tool_result` payload sweep (`bench/analyze-payloads.js`;
-see §11 and `BENCH_PLAN.md`), which characterise how much there is to prune, not
-what a real session bills. Until the matrix runs, treat the `eval/` percentages
-as what the pruning *function* produces on fixtures, not as real-world savings.
+calibrations, a 699-`tool_result` payload sweep (`bench/analyze-payloads.js`;
+see §11 and `BENCH_PLAN.md`), and the shake-out's prune counts — which
+characterise how much there is to prune, not what a real session bills. Until a
+matrix runs on a fixture the agent can actually complete, treat the `eval/`
+percentages as what the pruning *function* produces on fixtures, not as
+real-world savings.
 
 ---
 
@@ -569,3 +578,42 @@ which does not obviously exist — or evidence that re-reads dominate cost on so
 real workload. Q1 (§11.1) bounds that ceiling: tool output is ~1/5 of the window,
 and re-reads are a fraction of that. The prune lever already captures the bulky
 tail; dedupe was chasing the remainder and losing turns to do it.
+
+---
+
+## 13. The wide-fixture shake-out (pruning fires, but no valid savings)
+
+`bench/run.js` has been run once: a 9-run shake-out (3 trials × 3 arms,
+interleaved) on `bench/tasks/fix-getter-accessor-eslint` — a deliberately wide,
+exploratory fixture (18 failing tests across two eslint rules, root cause in a
+shared 2,880-line `ast-utils.js` not named in the prompt). Two things came out
+of it, and they point in opposite directions.
+
+**Pruning fires on wide exploratory work.** Unlike the four single-bug
+calibrations (BENCH_PLAN §6), where prune counts were 0/0/1/2, here pruning fired
+**2–7 times per run** (net 4k–35k heuristic tokens, **0 re-fetches**). When the
+agent tries to understand an unfamiliar file it does a single full read, which
+crosses the 200-line threshold; when it hunts for a specific thing it pages in
+~100-line windows, which does not. So the wide shape is where the prune lever has
+something to bite on — the surface §11 predicted (bulky tail), now seen live.
+
+**But there is no valid cost saving, because the task was not solved.** **0 of 9
+runs passed** — including **0 of 3 with ctxkeep off**. The benchmark's founding
+rule is that savings measured over runs that failed the task are not savings
+(`bench/run.js` header; §11's correctness gate), so the per-arm cost deltas here
+are survivorship noise, not a result. This is not a harness or verify fault: a
+separate diagnostic run solved the task cleanly (36 of 80 turns, verify exit 0),
+and the real fix passes verify — the task is *solvable*, just at a low success
+rate (~1/10 across the shake-out plus diagnostic). No arm completing the task
+means no arm's cost can be attributed to ctxkeep.
+
+**The honest conclusion.** Pruning fires on wide work but shows **no demonstrated
+cost saving on a solvable task**, because the only wide fixture built so far is
+one the agent usually fails to complete. The tension is the finding: a fixture
+wide enough to exercise pruning is often hard enough that a self-limiting agent
+fails to finish, and narrowing it toward a reliable ≥2/3 baseline shrinks the
+prune surface back toward the single-bug regime. A valid session-level number
+needs a fixture that is *both* prune-heavy and reliably solvable; it is an open
+question whether one exists for a competent, self-limiting agent. Q1 (§11.1)
+still bounds the ceiling regardless. Do not let a prune count off zero drift back
+into "the main lever."

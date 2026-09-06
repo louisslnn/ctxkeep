@@ -50,8 +50,12 @@ node --test --test-name-pattern="error lines survive" test/prune.test.js
 npm run eval
 ```
 
-This is the dashboard. It replays a set of fixtures — captured tool output —
-through the real pruner and prints what it saved and what it kept:
+This is the dashboard. It replays a set of synthetic fixtures — captured tool
+output — through the real pruning function (`pruneToolOutput`) and prints what it
+saved and what it kept. These are **mechanism** numbers: the function's return
+value on fixtures, **not** delivery into a live context window and **not** a
+real-world savings claim. A session-level number would come from the matrix in
+`bench/RUNBOOK.md`, which has produced none (see ARCHITECTURE.md §10, §13).
 
 ```
 fixture                     before   after   saved   inline  lost

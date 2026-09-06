@@ -28,12 +28,16 @@ prefix is re-read more cheaply for the rest of the session), but the ceiling on
 that is tool output's ~1/5 share, and only the **tail** of it — the occasional
 bulk read or giant artifact — is large enough to prune at all.
 
-**There is no end-to-end savings number yet.** `bench/run.js` exists but has
-never been run. Everything measured so far is the *mechanism*: the `eval/`
-fixtures below (does pruning elide and preserve correctly) and a payload
-distribution sweep — not a real session's cost. See
-[`bench/RUNBOOK.md`](bench/RUNBOOK.md) for how a session-level number would be
-produced, and `ARCHITECTURE.md` §11 for the measurements.
+**There is still no valid end-to-end savings number.** `bench/run.js` has been
+run once — a 9-run shake-out on a wide, exploratory fixture (18 failing eslint
+tests) — but **every run failed the task (0/9, including 0/3 with ctxkeep off)**,
+so the correctness gate voids the cost comparison: savings measured over runs
+that failed the task are not savings. Pruning *did* fire on that wide work (2–7
+prunes per run, 0 re-fetches), but with **no demonstrated cost saving**, because
+no run completed the task. Everything else measured so far is the *mechanism*:
+the `eval/` fixtures below (does pruning elide and preserve correctly) and a
+payload distribution sweep — not a real session's cost. See
+[`bench/RUNBOOK.md`](bench/RUNBOOK.md) and `ARCHITECTURE.md` §11 & §13.
 
 **Read-dedupe was removed.** An earlier version denied redundant re-reads. It
 fired zero times across four single-bug runs; when a redesign finally made it
@@ -152,7 +156,8 @@ separate concern (the `replaceText` Read drop hid behind green eval numbers once
 already) and is verified separately by `test/delivery-check.sh`. See
 ARCHITECTURE.md §8. A session-level savings number is a further step again —
 produced by running the matrix in [`bench/RUNBOOK.md`](bench/RUNBOOK.md), which
-has not been run.
+has been run only as a shake-out so far (0/9 passing — no valid number yet; see
+ARCHITECTURE.md §13).
 
 ```
 fixture                     before   after   saved   inline  lost
