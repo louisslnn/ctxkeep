@@ -1,0 +1,16 @@
+{
+  "name": "fix-getter-accessor-eslint",
+  "_comment_status": "Candidate D (BENCH_PLAN §7): the wide/long/re-read exploratory shape. Shake-out only (3 trials x 3 arms). Not a matrix. Limits are generous-but-uncalibrated (RUNBOOK warns against too-TIGHT ceilings; generous is the safe direction) — a manual preflight sets them if observed turns approach the cap.",
+  "model": "claude-sonnet-4-6",
+  "_comment_repo": "eslint clone (node_modules preserved by clean). Fresh git init (leak-free): single neutral commit, the fix 151ba3f5 unreachable, no PR number in tree. NOT a working repo.",
+  "repo": "/Users/louissalanon/bench-candidates/eslint",
+  "_comment_commit": "Wide fixture from 151ba3f5 (centralised getter/setter detection into ast-utils, rewired 3 rules). Base = 151ba3f5~1 (pre-fix); brought forward ONLY the two BEHAVIOR test files (accessor-pairs, getter-return) — NOT the ast-utils unit tests, which would force the agent to reproduce the exact internal helper. Pre-fix source => 18 failing (accessor-pairs 7 + getter-return 11), one coherent root cause: the real 4-file fix clears all 18 and leaves the whole rules suite green (34707/0). The buggy file (ast-utils.js) is shared and NOT named in the prompt.",
+  "commit": "54e6cc1df318a39cb75daee372d143091cba9ebe",
+  "_comment_prompt": "Names the symptom (false positives in two rules = the failing tests), not the shared cause (lib/rules/utils/ast-utils.js). Forbids test edits.",
+  "prompt": "The rule test suite has failing tests: the `getter-return` and `accessor-pairs` rules are reporting false positives — they flag valid code that should be allowed. Find the root cause in the source and fix it so every test passes. Do not modify any test file. Run the rule tests with `node_modules/.bin/mocha \"tests/lib/rules/**/*.js\"` and confirm all tests pass before you finish.",
+  "_comment_verify": "Scoped to the whole rules suite (~34.7k tests, ~27s): that is the real blast radius of an ast-utils change, so it catches collateral breakage in other rules while skipping the slow Makefile self-lint (which a pre-fix tree can trip on HEAD's config). Clauses: (1) all rule tests pass, (2) no tests/ file modified, (3) no .skip(/.only( introduced.",
+  "verify": "node_modules/.bin/mocha \"tests/lib/rules/**/*.js\" && git diff --exit-code -- tests/ && ! git diff | grep -qE '\\.(skip|only)\\('",
+  "maxTurns": 80,
+  "timeoutSec": 2700,
+  "verifyTimeoutSec": 120
+}
