@@ -18,12 +18,13 @@ import { join } from "node:path";
  *   metrics.jsonl             append-only savings ledger
  *
  * Session state is an APPEND-ONLY log, not a read-modify-write JSON blob.
- * Claude Code runs tools in parallel, so several PostToolUse hooks race to
- * record their reads at once. A read → mutate → write of one shared file lets
- * the last writer clobber every entry added since it read, and dedupe then
- * silently misses files. Appending one line per event sidesteps that: each hook
- * only ever adds its own line (an O_APPEND write, atomic for small records),
- * and readState reconstructs the current state by replaying the log.
+ * Claude Code can run hooks concurrently, so a read → mutate → write of one
+ * shared file lets the last writer clobber entries added since it read.
+ * Appending one line per event sidesteps that: each hook only ever adds its own
+ * line (an O_APPEND write, atomic for small records), and readState
+ * reconstructs the current state by replaying the log. Today the log carries
+ * only session bookkeeping (`startedAt`, the one-shot compaction gate); it is
+ * kept append-only so new event kinds can be added without a locking scheme.
  */
 
 function ensure(dir) {
@@ -87,7 +88,7 @@ function statePath(config, sessionId) {
 
 /** Replay the append-only event log into the current session state. */
 export function readState(config, sessionId) {
-  const state = { reads: {}, denials: [], turns: 0, compactedAt: 0 };
+  const state = {};
   const path = statePath(config, sessionId);
   if (!existsSync(path)) return state;
   let raw;
@@ -104,21 +105,6 @@ export function readState(config, sessionId) {
     } catch {
       continue; // a torn line from a crashed write — skip it, keep replaying
     }
-    if (ev.read && ev.read.path) {
-      // A list, not a single record: dedupe unions the line ranges already
-      // delivered for a file (path+content identity), so a partial re-read of
-      // seen lines is caught while a new region is not.
-      (state.reads[ev.read.path] ??= []).push({
-        at: ev.read.at,
-        tokens: ev.read.tokens,
-        cachedAt: ev.read.cachedAt ?? null,
-        hash: ev.read.hash ?? null,
-        start: ev.read.start ?? null,
-        end: ev.read.end ?? null,
-      });
-    }
-    if (ev.denied && ev.denied.path) state.denials.push(ev.denied);
-    if ("compactedAt" in ev) state.compactedAt = Math.max(state.compactedAt, ev.compactedAt);
     if ("startedAt" in ev) state.startedAt = ev.startedAt;
     if (ev.compactGateUsed) state.compactGateUsed = true;
   }

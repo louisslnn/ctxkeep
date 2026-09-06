@@ -161,10 +161,10 @@ ctxkeep stats
 ctxkeep — 1 session(s)
 
   pruned      3 results, saved ~34.2k tokens
-  deduped     1 reads, saved ~11.1k tokens
+  re-fetched  0 expansions, cost ~0 tokens
   compactions 0 snapshotted
 
-  total       ~45.3k tokens
+  net prune   ~34.2k tokens (gross saved − re-fetched)
 ```
 
 `stats` reads the metrics ledger written by the live hooks; it stays empty until

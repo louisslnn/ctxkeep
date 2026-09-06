@@ -40,7 +40,7 @@ if (!taskPath) {
 
 const task = JSON.parse(readFileSync(taskPath, "utf8"));
 const trials = Number(args.trials ?? 8);
-const armNames = String(args.arms ?? "off,prune,full").split(",");
+const armNames = String(args.arms ?? "off,on").split(",");
 
 /**
  * Pin the model. If routing shifts between the `off` runs and the `prune` runs,
@@ -58,15 +58,12 @@ if (!model) {
 }
 
 /**
- * Arms differ only in .ctxkeep.json. `prune` isolates the pruning lever;
- * `full` adds dedupe. Dedupe costs a turn every time it denies a read, so it
- * can plausibly be net-negative — that is exactly why it gets its own arm
- * instead of being bundled into a single on/off comparison.
+ * Arms differ only in .ctxkeep.json. Pruning is the only lever now (dedupe was
+ * removed — see ARCHITECTURE.md §12), so this is a straight on/off comparison.
  */
 const ARMS = {
   off: { enabled: false },
-  prune: { enabled: true, dedupe: { enabled: false } },
-  full: { enabled: true, dedupe: { enabled: true } },
+  on: { enabled: true },
 };
 
 const runId = `${task.name}-${new Date().toISOString().replace(/[:.]/g, "-")}`;
@@ -119,9 +116,8 @@ function verify() {
 
 function readCtxkeepLedger() {
   const empty = {
-    prunes: 0, dedupes: 0, dedupeRouted: 0, refetches: 0, compacts: 0,
-    savedByPrune: 0, savedByDedupe: 0, refetchTokens: 0,
-    routedPaths: 0, netPrune: 0, netDedupe: 0, claimedSaved: 0,
+    prunes: 0, refetches: 0, compacts: 0,
+    savedByPrune: 0, refetchTokens: 0, netPrune: 0,
   };
   const path = join(repo, ".ctxkeep", "metrics.jsonl");
   if (!existsSync(path)) return empty;
@@ -131,40 +127,20 @@ function readCtxkeepLedger() {
     .map((l) => JSON.parse(l));
 
   const prunes = rows.filter((r) => r.kind === "prune");
-  const dedupes = rows.filter((r) => r.kind === "dedupe");
-  const dedupeRouted = rows.filter((r) => r.kind === "dedupe_routed");
   const refetches = rows.filter((r) => r.kind === "refetch");
   const compacts = rows.filter((r) => r.kind === "compact");
 
   const savedByPrune = prunes.reduce((n, r) => n + (r.saved || 0), 0);
-  const savedByDedupe = dedupes.reduce((n, r) => n + (r.saved || 0), 0);
   const refetchTokens = refetches.reduce((n, r) => n + (r.tokens || 0), 0);
-
-  // A denial the agent routes around (a shell read of the denied path) cost a
-  // turn and saved nothing — count it as net-negative, mirroring bin/cli.js.
-  const deniedPaths = new Set(dedupes.map((r) => r.path).filter(Boolean));
-  const routedPaths = new Set(
-    dedupeRouted.map((r) => r.path).filter((p) => deniedPaths.has(p)),
-  );
-  const netDedupe = dedupes.length
-    ? Math.max(0, (savedByDedupe * (dedupes.length - routedPaths.size)) / dedupes.length)
-    : 0;
   const netPrune = savedByPrune - refetchTokens;
 
   return {
     prunes: prunes.length,
-    dedupes: dedupes.length,
-    dedupeRouted: dedupeRouted.length,
     refetches: refetches.length,
     compacts: compacts.length,
     savedByPrune,
-    savedByDedupe,
     refetchTokens,
-    routedPaths: routedPaths.size,
     netPrune,
-    netDedupe,
-    // Kept for backwards-compat with anything reading the old field name.
-    claimedSaved: savedByPrune + savedByDedupe,
   };
 }
 
@@ -254,7 +230,7 @@ try {
   process.exit(1);
 }
 const preflight = readCtxkeepLedger();
-if (preflight.prunes === 0 && preflight.dedupes === 0) {
+if (preflight.prunes === 0) {
   console.error(
     `\n✗ No ctxkeep activity recorded during a -p run.\n` +
       `  The hooks are not firing headless. Check:\n` +

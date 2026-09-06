@@ -56,15 +56,6 @@ export const DEFAULTS = {
   // TodoWrite/Edit/Write results are already small; pruning them is pure overhead.
   neverPrune: ["Edit", "Write", "TodoWrite", "Task", "AskUserQuestion"],
 
-  dedupe: {
-    enabled: true,
-    // Identity, not call-shape: a read is a duplicate when the file is unchanged
-    // (content hash) and every line it would return was already delivered this
-    // session (union of prior read ranges) — so offset/limit re-reads of seen
-    // lines are caught, a new region is not, and a compaction resets the record.
-    strategy: "content-hash+ranges",
-  },
-
   memory: {
     // Human-editable, git-committable. Claude writes here via the skill.
     file: "CONTEXT.md",

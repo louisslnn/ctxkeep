@@ -35,17 +35,22 @@ distribution sweep — not a real session's cost. See
 [`bench/RUNBOOK.md`](bench/RUNBOOK.md) for how a session-level number would be
 produced, and `ARCHITECTURE.md` §11 for the measurements.
 
-**Dedupe and memory are implemented but untested.** Dedupe fired **zero** times
-across four calibration runs — agents rarely re-read a byte-identical file.
-Memory never triggered because no benchmarked session reached compaction. Both
-may help on longer or multi-session work; that is unproven here.
+**Read-dedupe was removed.** An earlier version denied redundant re-reads. It
+fired zero times across four single-bug runs; when a redesign finally made it
+fire on wide exploratory work, 3 of 7 denials were routed around by the agent
+re-reading via shell anyway — net-negative exactly when active, while costing
+latency on every read. Two measurement rounds, so it was removed rather than
+kept on a maybe. See `ARCHITECTURE.md` §12.
+
+**Memory is implemented but untested.** It never triggered in benchmarking
+because no measured session reached compaction. It may help on longer or
+multi-session work; that is unproven here.
 
 So, deciding whether to install:
 
 - ✅ Green: pruning elides and preserves correctly on fixtures (`npm run eval`,
   0 critical patterns lost), fails open, and is reversible.
-- ⚠️ Red: no end-to-end savings number; dedupe and memory have never been
-  exercised.
+- ⚠️ Red: no end-to-end savings number; memory has never been exercised.
 - Realistic upper bound on prune savings: bounded by tool output's ~1/5 share
   of the window, and in practice the tail of that — meaningful on
   exploration-heavy sessions, negligible on short ones.
@@ -94,7 +99,6 @@ bin/cli.js              init · doctor · stats · expand
 hooks/
   hooks.json            plugin manifest — the wiring
   post-tool-use.js      prune (shrinks the re-read prefix)
-  pre-tool-use.js       dedupe unchanged re-reads
   session-start.js      re-inject memory on start/resume/compact/fork
   pre-compact.js        snapshot transcript, optional memory gate
 src/
@@ -119,7 +123,6 @@ Optional `.ctxkeep.json` at the project root, merged over the defaults in
     "Read": { "maxLines": 200, "headLines": 100, "tailLines": 40 },
     "Bash": { "maxLines": 120, "headLines": 30, "tailLines": 60 }
   },
-  "dedupe": { "enabled": true },
   "memory": { "file": "CONTEXT.md", "blockCompactUntilRecorded": false }
 }
 ```
@@ -198,8 +201,8 @@ would cost more latency than the pruning saves. Directionally right, not exact.
 
 The hooks do the mechanical work: no model judgment, no LLM calls, no latency
 beyond a Node process spawn. The skill (`skills/ctxkeep/SKILL.md`) does the part
-that needs judgment: when to expand a pruned artifact, how to respond to a
-dedupe denial, what qualifies as durable knowledge.
+that needs judgment: when to expand a pruned artifact, what qualifies as durable
+knowledge.
 
 Keep that boundary. Every piece of judgment you move into the hooks becomes a
 model call in your critical path, on every tool call, forever.

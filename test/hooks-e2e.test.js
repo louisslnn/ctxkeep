@@ -31,7 +31,7 @@ import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const HOOKS = join(HERE, "..", "hooks");
-const HOOK_FILES = ["pre-tool-use.js", "post-tool-use.js", "session-start.js", "pre-compact.js"];
+const HOOK_FILES = ["post-tool-use.js", "session-start.js", "pre-compact.js"];
 
 const bigOutput = (n = 600) => Array.from({ length: n }, (_, i) => `line ${i}`).join("\n");
 
@@ -143,153 +143,6 @@ test("post-tool-use skips a neverPrune tool even when large", () => {
   assert.equal(out, null, "Edit is on neverPrune; its result must pass through");
 });
 
-// --- PreToolUse: dedupe ------------------------------------------------------
-
-test("pre-tool-use denies a re-read of an unchanged file read this session", () => {
-  const root = scratch();
-  const file = join(root, "src.js");
-  writeFileSync(file, bigOutput(), "utf8");
-  // Pin mtime to the past so it is unambiguously older than the recorded read.
-  const past = Date.now() / 1000 - 3600;
-  utimesSync(file, past, past);
-
-  // First read: PostToolUse records it in session state.
-  runHook(
-    "post-tool-use.js",
-    {
-      session_id: "s-dedupe",
-      tool_name: "Read",
-      tool_use_id: "toolu_first",
-      tool_input: { file_path: file },
-      tool_response: { type: "text", file: { filePath: file, content: bigOutput() } },
-    },
-    root,
-  );
-
-  // Second read of the same unchanged file: PreToolUse must deny it.
-  const out = runHook(
-    "pre-tool-use.js",
-    { session_id: "s-dedupe", tool_name: "Read", tool_input: { file_path: file } },
-    root,
-  );
-
-  assert.ok(out, "a repeat read of an unchanged file must be denied");
-  assert.equal(out.hookSpecificOutput.permissionDecision, "deny");
-  assert.match(out.hookSpecificOutput.permissionDecisionReason, /already read in this session/);
-});
-
-test("pre-tool-use stays silent for a file never read this session", () => {
-  const root = scratch();
-  const out = runHook(
-    "pre-tool-use.js",
-    { session_id: "s-new", tool_name: "Read", tool_input: { file_path: join(root, "never.js") } },
-    root,
-  );
-  assert.equal(out, null, "a first read must be allowed through");
-});
-
-test("pre-tool-use denies an offset re-read of lines already delivered", () => {
-  // NEW CONTRACT: identity, not call-shape. An offset read of lines a prior
-  // whole-file read already delivered is a duplicate. (The old rule exempted
-  // every offset/limit read, which is why dedupe never fired.)
-  const root = scratch();
-  const file = join(root, "src.js");
-  writeFileSync(file, bigOutput(), "utf8");
-
-  runHook(
-    "post-tool-use.js",
-    {
-      session_id: "s-offset-seen",
-      tool_name: "Read",
-      tool_use_id: "toolu_w",
-      tool_input: { file_path: file },
-      tool_response: { type: "text", file: { filePath: file, content: bigOutput() } },
-    },
-    root,
-  );
-
-  const out = runHook(
-    "pre-tool-use.js",
-    { session_id: "s-offset-seen", tool_name: "Read", tool_input: { file_path: file, offset: 10, limit: 20 } },
-    root,
-  );
-  assert.ok(out, "an offset re-read of seen lines must be denied");
-  assert.equal(out.hookSpecificOutput.permissionDecision, "deny");
-});
-
-test("pre-tool-use allows a read of a region not yet seen", () => {
-  // CONSTRAINT 1: only the first 50 lines were read; a read past them is new.
-  const root = scratch();
-  const file = join(root, "src.js");
-  writeFileSync(file, bigOutput(), "utf8");
-
-  runHook(
-    "post-tool-use.js",
-    {
-      session_id: "s-new-region",
-      tool_name: "Read",
-      tool_use_id: "toolu_head",
-      tool_input: { file_path: file, offset: 1, limit: 50 },
-      tool_response: { type: "text", file: { filePath: file, content: bigOutput() } },
-    },
-    root,
-  );
-
-  const out = runHook(
-    "pre-tool-use.js",
-    { session_id: "s-new-region", tool_name: "Read", tool_input: { file_path: file, offset: 100, limit: 40 } },
-    root,
-  );
-  assert.equal(out, null, "a genuinely new region must be allowed through");
-});
-
-test("post-tool-use flags a shell read that routes around a dedupe denial", () => {
-  // CONSTRAINT 2 instrumentation: a denial the agent bypasses with a shell read
-  // of the same path cost a turn and saved nothing — record it as net-negative.
-  const root = scratch();
-  const file = join(root, "src.js");
-  writeFileSync(file, bigOutput(), "utf8");
-
-  runHook(
-    "post-tool-use.js",
-    {
-      session_id: "s-routed",
-      tool_name: "Read",
-      tool_use_id: "toolu_r",
-      tool_input: { file_path: file },
-      tool_response: { type: "text", file: { filePath: file, content: bigOutput() } },
-    },
-    root,
-  );
-  const denied = runHook(
-    "pre-tool-use.js",
-    { session_id: "s-routed", tool_name: "Read", tool_input: { file_path: file } },
-    root,
-  );
-  assert.equal(denied.hookSpecificOutput.permissionDecision, "deny");
-
-  runHook(
-    "post-tool-use.js",
-    {
-      session_id: "s-routed",
-      tool_name: "Bash",
-      tool_use_id: "toolu_b",
-      tool_input: { command: `cat ${file}` },
-      tool_response: { type: "text", stdout: bigOutput() },
-    },
-    root,
-  );
-
-  const ledger = readFileSync(join(root, ".ctxkeep", "metrics.jsonl"), "utf8")
-    .trim()
-    .split("\n")
-    .map((l) => JSON.parse(l));
-  assert.ok(
-    ledger.some((m) => m.kind === "dedupe_routed" && m.path === file),
-    "a shell read of a denied path must be recorded as routed-around",
-  );
-});
-
 // --- SessionStart: inject memory --------------------------------------------
 
 test("session-start injects the non-empty sections of CONTEXT.md", () => {
@@ -344,9 +197,9 @@ test(
   { skip: isRoot ? "chmod is bypassed when running as root" : false },
   () => {
     // Payloads chosen so each hook actually reaches for the cache: post writes an
-    // artifact, pre-tool-use and pre-compact replay the state log, session-start
-    // stamps state and sweeps. An EACCES from the 000 cache dir must never
-    // surface as a broken session.
+    // artifact, pre-compact replays the state log, session-start stamps state and
+    // sweeps. An EACCES from the 000 cache dir must never surface as a broken
+    // session.
     const cases = [
       [
         "post-tool-use.js",
@@ -358,7 +211,6 @@ test(
           tool_response: { type: "text", file: { filePath: "/repo/big.js", content: bigOutput() } },
         },
       ],
-      ["pre-tool-use.js", { session_id: "s", tool_name: "Read", tool_input: { file_path: "/repo/x.js" } }],
       ["session-start.js", { session_id: "s", source: "startup" }],
       ["pre-compact.js", { session_id: "s", trigger: "auto" }],
     ];

@@ -1,7 +1,7 @@
 {
   "name": "ctxkeep",
   "version": "0.1.0",
-  "description": "Context and token management for Claude Code. Prunes bulky tool output before it enters the context window, dedupes repeat file reads, and persists durable project memory across compactions.",
+  "description": "Context and token management for Claude Code. Prunes bulky tool output before it enters the context window and persists durable project memory across compactions.",
   "type": "module",
   "license": "MIT",
   "engines": {

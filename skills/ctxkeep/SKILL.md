@@ -39,20 +39,7 @@ Cache files are exempt from pruning, so reading one returns it in full — which
 means a large one costs full price. Prefer Grep, or Read with `offset` and
 `limit`, when you know roughly where to look.
 
-## 2. Duplicate reads are denied
-
-If you Read a file you already read this session and it hasn't changed on disk,
-the call is denied with a reason saying so. This is not an error and not a
-permissions problem. **Do not retry it, and do not work around it.**
-
-The content is already in the conversation above. Scroll back. If you genuinely
-need it again — because the earlier copy was pruned and you need the elided part
-— read the cache path from that earlier result, or Grep the file directly.
-
-The denial lifts automatically once the file changes on disk, so after you edit a
-file you can read it back normally.
-
-## 3. Recording durable knowledge
+## 2. Recording durable knowledge
 
 `CONTEXT.md` at the project root survives compaction and is re-injected at the
 start of every session. Anything not written down there is lost when the context
@@ -101,8 +88,8 @@ of a session is exactly when compaction is most likely to have already happened.
 
 ## When the user asks about savings
 
-`ctxkeep stats` prints the per-session ledger: tokens pruned, reads deduped, and
-which tools account for the most. `ctxkeep doctor` verifies the hooks are wired
+`ctxkeep stats` prints the per-session ledger: tokens pruned, tokens re-fetched,
+and which tools account for the most. `ctxkeep doctor` verifies the hooks are wired
 up and reports the tool-result shape the installed Claude Code version emits.
 
 Report the numbers as estimates. ctxkeep counts tokens with a character-ratio

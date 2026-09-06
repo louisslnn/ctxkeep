@@ -5,7 +5,7 @@ Keep entries short and factual. Delete anything that has stopped being true.
 
 ## Decisions
 
-- Two halves, kept separate: the hooks do mechanical pruning/dedupe/memory with
+- Two halves, kept separate: the hooks do mechanical pruning and memory with
   no model judgment, and the skill (`skills/ctxkeep/SKILL.md`) holds the parts
   that need judgment. Reason: every piece of judgment moved into a hook becomes a
   model call on the critical path of every tool call, forever.
@@ -53,6 +53,12 @@ Keep entries short and factual. Delete anything that has stopped being true.
 - A compaction gate that can retrigger — rejected: it wedges a session against a
   full context window. `blockCompactUntilRecorded` fires at most once per session
   by design.
+- Read-dedupe (deny a re-read of already-delivered lines) — removed after two
+  measurement rounds: fired 0× on single-bug tasks, and when a file-identity
+  redesign made it fire on wide work, 3 of 7 denials were routed around via shell
+  (net-negative), while costing a full-file hash on every Read. Whether a re-read
+  is wasteful or needed is judgment, which invariant 7 bars from hooks, so a
+  mechanical hook can't reliably beat zero. See ARCHITECTURE.md §12.
 
 ## Open threads
 

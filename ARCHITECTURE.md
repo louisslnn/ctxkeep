@@ -68,19 +68,7 @@ This is the whole system in one sequence. Claude decides to read
 Claude emits Read(file_path: "src/billing.js")
         │
         ▼
-┌─ PreToolUse hook ──────────────────────────────────────────┐
-│ hooks/pre-tool-use.js                                      │
-│   Is this a Read?                    yes                   │
-│   Is dedupe on?                      yes                   │
-│   Was this path read this session?   look in session state │
-│     → no  ▸ stay silent, let it through                    │
-│     → yes ▸ has mtime changed since?                       │
-│              → yes ▸ stay silent                           │
-│              → no  ▸ DENY with a reason pointing at cache  │
-└────────────────────────────────────────────────────────────┘
-        │ (allowed)
-        ▼
-   Claude Code actually reads the file
+   Claude Code reads the file
         │
         ▼
 ┌─ PostToolUse hook ─────────────────────────────────────────┐
@@ -89,12 +77,11 @@ Claude emits Read(file_path: "src/billing.js")
 │   Is the tool on neverPrune?       no                      │
 │   Is the path a cache file?        no                      │
 │   pruneToolOutput(...)                                     │
-│     ├ pick rule for "Read"       maxLines 400              │
-│     ├ 700 > 400, so prune                                  │
+│     ├ pick rule for "Read"       maxLines 200              │
+│     ├ 700 > 200, so prune                                  │
 │     ├ keep lines 0–99 and 660–699                          │
 │     ├ stash all 700 lines → .ctxkeep/cache/toolu_X.txt     │
 │     └ append the retrieval pointer                         │
-│   record the read in session state (for dedupe)            │
 │   record the saving in metrics.jsonl                       │
 │   emit updatedToolOutput                                   │
 └────────────────────────────────────────────────────────────┘
@@ -117,7 +104,6 @@ decision to recover it belongs to Claude**, informed by the skill.
 ```
 hooks/           lifecycle entry points — one file per event
   hooks.json       the wiring (which hook runs on which event/matcher)
-  pre-tool-use.js  dedupe
   post-tool-use.js prune          ← the main lever
   session-start.js inject memory
   pre-compact.js   snapshot + optional gate
@@ -177,7 +163,10 @@ than the pruning saves. Character-ratio heuristic, honest about being one.
 
 ---
 
-## 5. The three mechanisms
+## 5. The two mechanisms
+
+A third mechanism, read-dedupe, was removed after two rounds of measurement —
+see §12 for the evidence and reasoning.
 
 ### Mechanism 1 — Prune (the primary mechanism, a bounded lever)
 
@@ -189,7 +178,7 @@ kept, the middle is elided with a marker saying how much was removed, error-ish
 lines are salvaged from the middle regardless of position, and the full text
 goes to disk with a pointer appended.
 
-This is the biggest of the three savings, but "biggest" is not "big": tool
+This is the only token-savings lever, but "primary" is not "big": tool
 output is ~1/5 of the window and only its tail is bulky enough to prune, so the
 realistic gain is modest and lives in the occasional oversized result (§11.1).
 `Bash` output specifically almost never crosses its threshold — agents pipe
@@ -233,21 +222,7 @@ of the middle, the elision splits into several gaps, each reporting its own
 range. Asserted by the `read-line-numbers` eval fixture and
 `test/lines-elision.test.js`.
 
-### Mechanism 2 — Dedupe
-
-**Hook:** `PreToolUse` → `permissionDecision: "deny"`
-**Applies to:** `Read` only
-
-If a file was read this session and its mtime hasn't moved, the re-read is
-denied with a reason explaining where the content already is. Partial reads
-(with `offset`/`limit`) are exempt — those are a different request.
-
-A denial costs a turn. Whether that turn is cheaper than the re-read depends on
-file size and how the model responds. **This is the least-proven of the three
-mechanisms**, which is why the benchmark isolates it in its own arm rather than
-bundling it with pruning.
-
-### Mechanism 3 — Memory
+### Mechanism 2 — Memory
 
 **Hooks:** `PreCompact` (save) + `SessionStart` (restore)
 
@@ -331,11 +306,13 @@ but nothing ever sets it. The comparison is always against epoch, so
 `blockCompactUntilRecorded` **never fires**. The feature is dead code.
 **Fixed in `19d09b9` (task 1.1):** `SessionStart` stamps `startedAt`.
 
-**The session state file races.** Claude Code runs tools in parallel. `readState`
-→ mutate → `writeState` is a read-modify-write with no locking, so concurrent
-`PostToolUse` hooks will clobber each other's entries. Effect: dedupe silently
-misses some files. **Fixed in `b07c6ad` (task 1.2):** session state is now an
-append-only log, one line per event, replayed by `readState`.
+**The session state / metrics files race.** Claude Code runs tools in parallel.
+A `readState` → mutate → `writeState` cycle with no locking lets concurrent hooks
+clobber each other's entries — silently losing recorded events (and, at the time,
+the reads dedupe depended on). **Fixed in `b07c6ad` (task 1.2):** the log is now
+append-only, one line per event, replayed by `readState`; the metrics ledger
+appends the same way. (Dedupe itself was later removed — §12 — but the
+append-only design still guards the ledger.)
 
 **The artifact cache is never garbage collected.** Every pruned result writes a
 file to `.ctxkeep/cache/` forever. A long-lived project will accumulate
@@ -538,3 +515,57 @@ lines, head(100)+tail(40) elides ≥60 lines, and 60 lines of code
 floor.** Revisit only if `maxLines` is ever pushed down near the 140-line
 head+tail sum, where the smallest prunes would start approaching the pointer
 cost. Reproduce with `node bench/analyze-context-share.js`.
+
+---
+
+## 12. Read-dedupe was removed
+
+Dedupe denied a `Read` whose lines had already been delivered this session, on
+the theory that a denial (one turn) is cheaper than re-delivering the bytes. Two
+rounds of measurement said otherwise, and it was removed rather than kept on the
+strength of a maybe.
+
+**The evidence.**
+
+- **Round 1 — four single-bug calibrations: it fired 0 times.** Competent agents
+  don't re-read byte-identical files; they grep and offset-read. The original
+  call-identity design (path + mtime, offset reads exempt) never matched.
+- **Round 2 — a file-identity redesign (content hash + union of delivered line
+  ranges) finally made it fire on wide exploratory work — and it was
+  net-negative.** On the eslint shake-out's `on` arm it fired 7 times; **3 of
+  those denials were routed around** by the agent re-reading the same path via a
+  shell `cat`/`sed`, which cost a turn and delivered the bytes anyway. Net saving
+  collapsed to 2,151 / 1,863 / **0** heuristic tokens across the three runs.
+
+**Why it cannot reliably beat zero — the structural argument.** A denial only
+wins if the agent did *not* actually need those lines and would not route around.
+Distinguishing a wasteful re-read from a needed one is a **judgment call**, and
+invariant 7 (§6) bars judgment from hooks. A mechanical hook can only ask "were
+these exact lines delivered before," which is orthogonal to whether the model
+needs them *now* — so it will keep denying needed re-reads, the agent routes
+around, and it is net-negative *exactly when it fires*. Meanwhile it paid to hash
+the whole file on **every** `Read` (`PreToolUse` on the hot path) to occasionally
+lose tokens. A mechanism that costs latency on every read to sometimes lose
+tokens is worse than nothing.
+
+**It also conflicted with pruning.** A pruned Read records its *requested* range
+as delivered, but the model only ever saw head+tail — the middle was elided to
+disk. Dedupe would then deny a re-read of the very lines pruning had hidden,
+pointing the model at the cache pointer it was already free to follow. The two
+mechanisms fought over the same range. (Observed live while editing this repo,
+which dogfoods its own hooks.)
+
+**What was removed:** `hooks/pre-tool-use.js` (the whole hook) and its
+`PreToolUse` registration; `src/dedupe.js`; the read-recording and route-around
+tracking in `hooks/post-tool-use.js`; the `reads`/`denials`/`compactedAt` state
+in `src/store.js` and the `compact`-time stamp in `session-start.js`; the
+`dedupe` config block; the `dedupe`/`dedupe_routed`/net-dedupe reporting in
+`ctxkeep stats`; and the third benchmark arm (`bench/run.js` is now a straight
+off/on comparison). `readState` survives for `startedAt` and the compaction gate.
+
+**What would change the verdict** (none of it cheap enough to justify now): a
+signal that separates wasteful from needed re-reads *without* model judgment —
+which does not obviously exist — or evidence that re-reads dominate cost on some
+real workload. Q1 (§11.1) bounds that ceiling: tool output is ~1/5 of the window,
+and re-reads are a fraction of that. The prune lever already captures the bulky
+tail; dedupe was chasing the remainder and losing turns to do it.

@@ -16,21 +16,6 @@
         ]
       }
     ],
-    "PreToolUse": [
-      {
-        "matcher": "Read",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node",
-            "args": [
-              "${CLAUDE_PROJECT_DIR}/hooks/pre-tool-use.js"
-            ],
-            "timeout": 10
-          }
-        ]
-      }
-    ],
     "PostToolUse": [
       {
         "matcher": "Read|Bash|Grep|Glob|WebFetch",

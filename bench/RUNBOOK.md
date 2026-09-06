@@ -3,11 +3,13 @@
 Every command, in order, with the decision points spelled out. Budget about
 half a day: two hours of setup, then a few hours of unattended runs.
 
-**Scope note before you start.** This measures the **prune** and **dedupe**
-mechanisms. It does *not* measure memory — a single-session task rarely triggers
-compaction, so `CONTEXT.md` never comes into play. Measuring memory needs a
-multi-session design and a different task shape. Don't quote a number from this
-harness as evidence that the memory feature works.
+**Scope note before you start.** This measures the **prune** mechanism (the
+harness is now a straight off/on comparison). Read-dedupe was removed after two
+measurement rounds — see ARCHITECTURE.md §12 — so any older text below about a
+third `dedupe`/`full` arm or interpreting dedupe results is historical and no
+longer applies. This does *not* measure memory either — a single-session task
+rarely triggers compaction, so `CONTEXT.md` never comes into play. Don't quote a
+number from this harness as evidence that the memory feature works.
 
 ---
 

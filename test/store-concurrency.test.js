@@ -6,10 +6,12 @@ import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { DEFAULTS } from "../src/config.js";
-import { readState } from "../src/store.js";
+import { readMetrics } from "../src/store.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const POST = join(HERE, "..", "hooks", "post-tool-use.js");
+
+const bigOutput = (n = 600) => Array.from({ length: n }, (_, i) => `line ${i}`).join("\n");
 
 function scratchConfig() {
   const root = mkdtempSync(join(tmpdir(), "ctxkeep-race-"));
@@ -27,7 +29,11 @@ function runPost(input, projectDir) {
   });
 }
 
-test("20 concurrent post-tool-use processes all record their read", async () => {
+// The metrics ledger is an append-only log written by PostToolUse. Claude Code
+// can run tools concurrently, so many prunes race to append at once. An O_APPEND
+// write is atomic for small records, so no entry should clobber another — this
+// asserts that property directly against the real prune path.
+test("20 concurrent post-tool-use prunes all record their metric", async () => {
   const config = scratchConfig();
   const session = "race-session";
   const n = 20;
@@ -40,21 +46,17 @@ test("20 concurrent post-tool-use processes all record their read", async () => 
           tool_name: "Read",
           tool_use_id: `t${i}`,
           tool_input: { file_path: `/repo/file${i}.js` },
-          tool_response: `contents of file ${i}`,
+          tool_response: { type: "text", file: { filePath: `/repo/file${i}.js`, content: bigOutput() } },
         },
         config.projectRoot,
       ),
     ),
   );
 
-  const state = readState(config, session);
-  const recorded = Object.keys(state.reads).sort();
-  const expected = Array.from({ length: n }, (_, i) => `/repo/file${i}.js`).sort();
+  const prunes = readMetrics(config).filter((m) => m.kind === "prune");
+  const ids = prunes.map((m) => m.id).sort();
+  const expected = Array.from({ length: n }, (_, i) => `t${i}`).sort();
 
-  assert.equal(
-    recorded.length,
-    n,
-    `expected all ${n} reads, got ${recorded.length}: ${recorded.join(", ")}`,
-  );
-  assert.deepEqual(recorded, expected);
+  assert.equal(prunes.length, n, `expected all ${n} prune metrics, got ${prunes.length}: ${ids.join(", ")}`);
+  assert.deepEqual(ids, expected);
 });

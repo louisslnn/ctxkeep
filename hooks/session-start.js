@@ -26,13 +26,6 @@ guard(async () => {
   // return so the gate works even when memory is still the empty template.
   appendState(config, input.session_id, { startedAt: Date.now() });
 
-  // A `compact` start fires after compaction has discarded context. Reads
-  // recorded before now may have been summarised out of the window, so dedupe
-  // must not deny them — stamp the compaction time for it to filter against.
-  if (input.source === "compact") {
-    appendState(config, input.session_id, { compactedAt: Date.now() });
-  }
-
   // Garbage-collect aged artifacts here, off the hot path. Never in PostToolUse.
   // Only on a fresh `startup`: `resume`, `compact` and `fork` all continue a
   // conversation that already holds pruned results whose [ctxkeep] pointers

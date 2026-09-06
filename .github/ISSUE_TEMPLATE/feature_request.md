@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Propose a change to how ctxkeep prunes, dedupes, or persists memory
+about: Propose a change to how ctxkeep prunes tool output or persists memory
 title: ""
 labels: enhancement
 assignees: ""

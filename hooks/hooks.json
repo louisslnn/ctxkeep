@@ -1,5 +1,5 @@
 {
-  "description": "ctxkeep — prunes bulky tool output, dedupes repeat reads, and persists project memory across compactions.",
+  "description": "ctxkeep — prunes bulky tool output and persists project memory across compactions.",
   "hooks": {
     "SessionStart": [
       {
@@ -11,20 +11,6 @@
             "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/session-start.js"],
             "timeout": 10,
             "statusMessage": "Loading project context"
-          }
-        ]
-      }
-    ],
-
-    "PreToolUse": [
-      {
-        "matcher": "Read",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool-use.js"],
-            "timeout": 10
           }
         ]
       }

@@ -65,26 +65,11 @@ function stats() {
   }
 
   const prunes = metrics.filter((m) => m.kind === "prune");
-  const dedupes = metrics.filter((m) => m.kind === "dedupe");
-  const dedupeRouted = metrics.filter((m) => m.kind === "dedupe_routed");
   const compacts = metrics.filter((m) => m.kind === "compact");
   const refetches = metrics.filter((m) => m.kind === "refetch");
 
   const savedByPrune = prunes.reduce((n, m) => n + (m.saved || 0), 0);
-  const savedByDedupe = dedupes.reduce((n, m) => n + (m.saved || 0), 0);
   const before = prunes.reduce((n, m) => n + (m.before || 0), 0);
-
-  // Dedupe fidelity cost: a denial the agent routes around (a shell read of the
-  // same path) cost a turn and saved nothing. Match a route-around to a denial
-  // by path, count net-useful denials, and scale the gross saving down so the
-  // total does not credit denials the agent undid.
-  const deniedPaths = new Set(dedupes.map((m) => m.path).filter(Boolean));
-  const routedPaths = new Set(
-    dedupeRouted.map((m) => m.path).filter((p) => deniedPaths.has(p)),
-  );
-  const netDedupe = dedupes.length
-    ? Math.max(0, (savedByDedupe * (dedupes.length - routedPaths.size)) / dedupes.length)
-    : 0;
 
   // Fidelity cost: when the model re-reads a pruned artifact it pulls the full
   // text back in, spending the tokens the prune saved (and then some). Net
@@ -108,15 +93,8 @@ function stats() {
     console.log(`              (${reExpanded}/${prunedIds.size} prunes re-expanded, ` +
       `${Math.round((100 * reExpanded) / prunedIds.size)}%)`);
   }
-  console.log(`  deduped     ${dedupes.length} reads, saved ~${formatTokens(savedByDedupe)} tokens`);
-  if (dedupes.length) {
-    console.log(`              (${routedPaths.size}/${deniedPaths.size} paths routed around — ` +
-      `net-negative: cost a turn, saved nothing)`);
-  }
   console.log(`  compactions ${compacts.length} snapshotted`);
   console.log(`\n  net prune   ~${formatTokens(netPrune)} tokens (gross saved − re-fetched)`);
-  console.log(`  net dedupe  ~${formatTokens(netDedupe)} tokens (denials the agent did not route around)`);
-  console.log(`  total       ~${formatTokens(netPrune + netDedupe)} tokens`);
 
   const byTool = {};
   for (const m of prunes) byTool[m.tool] = (byTool[m.tool] || 0) + (m.saved || 0);

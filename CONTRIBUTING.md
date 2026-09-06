@@ -141,7 +141,7 @@ These can't be set from a PR; paste them into the repository settings.
 
 **Description (one line):**
 
-> Context & token manager for Claude Code — reversibly prunes bulky tool output, dedupes repeat file reads, and persists project memory across compactions.
+> Context & token manager for Claude Code — reversibly prunes bulky tool output and persists project memory across compactions.
 
 **Topics:**
 
