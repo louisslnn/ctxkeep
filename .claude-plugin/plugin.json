@@ -1,9 +1,9 @@
 {
   "name": "ctxkeep",
   "version": "0.1.0",
-  "description": "Prunes bulky tool output before it enters context and persists durable project memory across compactions.",
+  "description": "Context and token management for Claude Code. Prunes bulky tool output before it enters the context window and persists durable project memory across compactions.",
   "author": { "name": "Louis Salanon", "email": "louis.salanon7@gmail.com" },
   "homepage": "https://github.com/louisslnn/ctxkeep",
   "license": "MIT",
-  "keywords": ["context", "tokens", "memory", "hooks"]
+  "keywords": ["claude-code", "claude-code-plugin", "context", "tokens", "memory", "hooks"]
 }

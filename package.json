@@ -4,6 +4,10 @@
   "description": "Context and token management for Claude Code. Prunes bulky tool output before it enters the context window and persists durable project memory across compactions.",
   "type": "module",
   "license": "MIT",
+  "author": "Louis Salanon <louis.salanon7@gmail.com>",
+  "homepage": "https://github.com/louisslnn/ctxkeep#readme",
+  "repository": { "type": "git", "url": "git+https://github.com/louisslnn/ctxkeep.git" },
+  "bugs": { "url": "https://github.com/louisslnn/ctxkeep/issues" },
   "engines": {
     "node": ">=20"
   },
@@ -23,6 +27,7 @@
     "claude-code-plugin",
     "context",
     "tokens",
+    "memory",
     "hooks"
   ],
   "scripts": {
