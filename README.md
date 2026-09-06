@@ -2,13 +2,15 @@
 
 Context and token management for Claude Code.
 
-Three mechanisms, each hooked into a different point in the agent lifecycle:
+Two mechanisms, each hooked into a different point in the agent lifecycle:
 
 | What | Where | Status |
 |---|---|---|
 | Prune bulky tool results before they enter context | `PostToolUse` → `updatedToolOutput` | Works; measured on the mechanism, not yet end-to-end |
-| Deny re-reads of unchanged files | `PreToolUse` → `permissionDecision` | Implemented, **untested** — never fired in a benchmark |
 | Persist and restore project memory across compaction | `PreCompact` + `SessionStart` | Implemented, **untested** — no benchmarked session has compacted |
+
+(A third mechanism, read-dedupe, was built and then removed after measurement —
+see "What it does, and what's been measured" below and `ARCHITECTURE.md` §12.)
 
 Pruning is reversible: every shortened result carries a pointer to the full
 text on disk, and the bundled skill teaches Claude when to follow it.
