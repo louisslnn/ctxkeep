@@ -1,8 +1,8 @@
 # Contributing to ctxkeep
 
 ctxkeep is a context and token manager for Claude Code: it hooks the agent
-lifecycle to shorten bulky tool results before they enter the context window,
-deny redundant re-reads, and persist project knowledge across compaction.
+lifecycle to shorten bulky tool results before they enter the context window and
+persist project knowledge across compaction.
 
 Read `ARCHITECTURE.md` before changing anything in `src/` or `hooks/`. It
 documents invariants that look safe to break locally and cause problems
@@ -52,7 +52,7 @@ bash test/delivery-check.sh
 ```
 
 It configures ctxkeep's `PostToolUse` hook in a scratch project, drives a real
-`claude -p` session that Reads a 600-line file (over the 400-line prune
+`claude -p` session that Reads a 600-line file (over the 200-line prune
 threshold), then parses the session transcript for the *specific* Read
 `tool_result` the model consumed. Exit 0 = the model received pruned output
 (`[ctxkeep]` pointer present in the delivered result); exit 1 = it received the
@@ -67,7 +67,7 @@ and `hooks/post-tool-use.js` — and before a release.
 **Manual fallback (no `claude` CLI, or release sign-off):**
 
 1. In a project with ctxkeep's hooks active, Read a file longer than the `Read`
-   rule's `maxLines` (default 400) — e.g. 600+ lines.
+   rule's `maxLines` (default 200) — e.g. 600+ lines.
 2. Look at what you receive. Correct delivery is a **head + `… N lines elided …`
    marker + tail**, ending in a `[ctxkeep]` pointer to `.ctxkeep/cache/…`. You
    should **not** see the whole file.

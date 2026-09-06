@@ -6,8 +6,39 @@ to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-Nothing released yet. The work below is on the path to a first `0.1.0` and is
-grouped by the phase that produced it.
+Nothing yet.
+
+## [0.1.0] — 2026-09-06
+
+First public release. The honest one-paragraph story: three lifecycle mechanisms
+were built — **prune** bulky tool output on the way into context, **dedupe**
+redundant re-reads, and **persist memory** across compaction. Then they were
+measured. Measurement overturned the founding premise (tool output is ~1/5 of the
+context window and ~0.2% of billed input, not the dominant cost), so **pruning is
+scoped honestly to what the data supports** — a real but bounded lever, with no
+valid end-to-end savings number yet. **Dedupe was removed** after two measurement
+rounds showed it net-negative when it fired. **Memory is implemented but
+untested** — no benchmarked session reached compaction. What ships is pruning
+(measured on the mechanism, reversible, fail-open) plus memory (unproven).
+
+Highlights:
+
+- **Prune** shortens long tool results before they enter context, reversibly
+  (original stashed to `.ctxkeep/`, retrieval pointer appended). Read threshold
+  tuned from 400→200 lines against a 699-`tool_result` payload sweep. Delivery
+  into a live `claude -p` session is verified end to end, not just logged.
+- **Dedupe removed.** It fired 0× across four single-bug calibrations; a
+  file-identity redesign made it fire on wide work but 3 of 7 denials were routed
+  around by the agent (net-negative), while costing a full-file hash on every
+  read. Removed rather than kept on a maybe (`ARCHITECTURE.md` §12).
+- **Memory** (`CONTEXT.md` snapshot on `PreCompact`, re-injected on
+  `SessionStart`) ships but is untested end to end.
+- **Honesty:** README and `ARCHITECTURE.md` state the measured ceiling plainly;
+  eval percentages are labelled everywhere as synthetic-fixture mechanism
+  numbers, not real-world savings. The one wide benchmark shake-out was 0/9
+  (`ARCHITECTURE.md` §13).
+
+The detailed record, grouped by the phase that produced it:
 
 ### Phase 0 — repository correctness
 
@@ -15,17 +46,16 @@ grouped by the phase that produced it.
   Claude Code expects, so the documented plugin install path works (0.2). This
   also satisfies the packaging manifest requirement (0.4): `npm pack --dry-run`
   now lists `.claude-plugin/plugin.json` in the tarball.
-- **Removed:** foreign VS Code extension artifacts (`kickbacks-*`) from the
-  working tree; added `*.vsix` to `.gitignore` (0.3).
+- **Removed:** foreign VS Code extension artifacts (`kickbacks-*`) — from the
+  working tree and from git history; `*.vsix` is gitignored. History purge is
+  complete (`git log --all --name-only | grep -c vsix` → 0) (0.3).
 - **Docs:** the README eval table is labelled as synthetic-fixture output — it
   measures the harness, not real sessions, and is not a real-world savings claim
   (0.6).
-- **Deferred (recorded in `BLOCKED.md`, not yet resolved):**
-  - The project name is not yet settled across `package.json`, bin, skill
-    directory, config filename, plugin, and docs; the naming decision and npm
-    availability were recorded rather than applied (0.1).
-  - The install path (publish vs install-from-source vs marketplace) was
-    recorded as a blocker rather than resolved (0.5).
+- **Settled:** the project name is `ctxkeep` across `package.json`, bin, skill
+  directory, config filename, plugin manifest, and docs (0.1).
+- **Settled:** the install path is source-install (`git clone` + `npm install
+  -g .`), documented in the README (0.5).
 
 ### Phase 1 — verified defects
 
@@ -63,4 +93,26 @@ Each fix landed with a regression test that fails before it and passes after.
   salvage `go test`'s interleaved failure markers and location lines; JS/TS
   fixtures unchanged (2.3).
 
-[Unreleased]: https://github.com/louisslnn/ctxkeep/commits/main
+### Phase 3 — measurement and scope
+
+- **Measured:** a 699-`tool_result` payload sweep and per-session usage analysis
+  overturned the founding premise. Tool output is ~1/5 of the peak context
+  window and ~0.2% of billed input; the bill is dominated by prefix size ×
+  turns. `README.md` and `ARCHITECTURE.md` §1/§5/§11 were corrected to this.
+- **Tuned:** the Read prune threshold from 400→200 lines — 400 sat at the top of
+  the real read-size distribution and caught almost nothing.
+- **Removed:** read-dedupe. Two measurement rounds (0× on single-bug tasks;
+  net-negative when it fired on wide work, 3/7 denials routed around) plus a
+  structural mismatch — telling a wasteful re-read from a needed one is judgment,
+  which hooks may not do — led to removing the hook, its state-tracking, config,
+  stats reporting, and the third benchmark arm (`ARCHITECTURE.md` §12).
+- **Benchmarked (inconclusive):** one 9-run shake-out on a wide exploratory
+  fixture. Pruning fired (2–7 prunes/run) but 0/9 runs completed the task, so no
+  valid savings number exists; the fixture is retained but flagged unsuitable as
+  a cost baseline (`ARCHITECTURE.md` §13).
+- **Verified:** end-to-end delivery — a fresh source install driving a real
+  `claude -p` session confirmed the pruned output reaches the model, not just the
+  metrics ledger.
+
+[Unreleased]: https://github.com/louisslnn/ctxkeep/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/louisslnn/ctxkeep/releases/tag/v0.1.0

@@ -3,8 +3,8 @@
 ## What this project is
 
 A context and token manager for Claude Code. It hooks the agent lifecycle to
-shorten bulky tool results before they enter the context window, deny redundant
-re-reads, and persist project knowledge across compaction.
+shorten bulky tool results before they enter the context window and persist
+project knowledge across compaction.
 
 Read `ARCHITECTURE.md` before changing anything in `src/` or `hooks/`. It
 documents invariants that look safe to break locally and cause problems
