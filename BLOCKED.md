@@ -80,8 +80,12 @@ byte-identical before/after — only the message changed) and the branch was
 force-pushed with `--force-with-lease`. The filter-branch backup and reflog were
 expired.
 
-**Verified:** `git log --all --name-only | grep -c vsix` → `0`, and
-`git rev-list --all --objects | grep -c vsix` → `0`.
+**Verified:** the blob is gone — `git rev-list --all --objects | grep -c vsix`
+→ `0`. Note that `git log --all --name-only | grep -c vsix` is **not** `0`: the
+release-closure commit messages (this file's commit, the CHANGELOG entry) mention
+the word while *documenting* the purge. Those are commit-message text, not
+artifacts, and they are left as-is deliberately — chasing literal `0` would mean
+rewording history to avoid a word. Settled; do not re-investigate.
 
 Caveat retained from the original note: if the `.vsix` was ever fetched from a
 public remote before the purge, treat its contents as already disclosed —

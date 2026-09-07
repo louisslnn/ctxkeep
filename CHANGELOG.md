@@ -47,8 +47,11 @@ The detailed record, grouped by the phase that produced it:
   also satisfies the packaging manifest requirement (0.4): `npm pack --dry-run`
   now lists `.claude-plugin/plugin.json` in the tarball.
 - **Removed:** foreign VS Code extension artifacts (`kickbacks-*`) — from the
-  working tree and from git history; `*.vsix` is gitignored. History purge is
-  complete (`git log --all --name-only | grep -c vsix` → 0) (0.3).
+  working tree and from git history; `*.vsix` is gitignored (0.3). The binary
+  blob is gone from all reachable history (`git rev-list --all --objects |
+  grep -c vsix` → 0). A `grep` of `git log --all --name-only` still matches the
+  word because a few commit messages *document* the purge; those are text, not
+  artifacts. **Settled — a future audit need not re-investigate this.**
 - **Docs:** the README eval table is labelled as synthetic-fixture output — it
   measures the harness, not real sessions, and is not a real-world savings claim
   (0.6).
